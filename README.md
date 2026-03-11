@@ -1,4 +1,4 @@
-# nestjs-smart-query
+# smart-query-nestjs
 
 A high-performance, ORM-agnostic NestJS library for search, filtering, pagination, and sorting in REST APIs.
 
@@ -17,7 +17,7 @@ A high-performance, ORM-agnostic NestJS library for search, filtering, paginatio
 ## Installation
 
 ```bash
-npm install nestjs-smart-query
+npm install smart-query-nestjs
 ```
 
 ## Quick Start
@@ -26,7 +26,7 @@ npm install nestjs-smart-query
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { SmartQueryModule } from 'nestjs-smart-query';
+import { SmartQueryModule } from 'smart-query-nestjs';
 
 @Module({
   imports: [
@@ -48,7 +48,7 @@ export class AppModule {}
 
 ```typescript
 import { Controller, Get, UseInterceptors } from '@nestjs/common';
-import { SmartQueryInterceptor, SmartQuery, buildSmartQuery } from 'nestjs-smart-query';
+import { SmartQueryInterceptor, SmartQuery, buildSmartQuery } from 'smart-query-nestjs';
 
 const customerQueryConfig = {
   searchableFields: ['full_name', 'email'],
