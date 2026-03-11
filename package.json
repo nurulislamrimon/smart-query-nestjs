@@ -1,6 +1,6 @@
 {
   "name": "smart-query-nestjs",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "High-performance search, filtering, pagination, and sorting for NestJS REST APIs",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -30,8 +30,15 @@
     "rest-api",
     "orm-agnostic"
   ],
-  "author": "",
+  "author": "Nurul Islam Rimon",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nurulislamrimon/smart-query-nestjs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nurulislamrimon/smart-query-nestjs/issues"
+  },
   "dependencies": {
     "qs": "^6.12.0"
   },

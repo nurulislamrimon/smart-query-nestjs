@@ -234,3 +234,11 @@ The library includes several performance optimizations:
 ## License
 
 MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Author
+
+[Nurul Islam Rimon](https://github.com/nurulislamrimon)
