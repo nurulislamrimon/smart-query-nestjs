@@ -20,9 +20,23 @@ A high-performance, ORM-agnostic NestJS library for search, filtering, paginatio
 npm install smart-query-nestjs
 ```
 
+## Architecture
+
+This library follows a two-level configuration architecture:
+
+1. **Global Configuration** (`SmartQueryModule.forRoot()`) - System-level settings that apply globally
+2. **Query Options** - Entity-specific settings defined at the interceptor level
+
+### Why This Architecture?
+
+Searchable and filterable fields are **model-specific**. Different entities (User, Product, Order, etc.) require different fields. Defining these globally was poor architecture because:
+- You'd need to define all possible fields for all entities in one place
+- Adding a new entity required updating the global config
+- It's not clear which fields belong to which entity
+
 ## Quick Start
 
-### 1. Configure the Module
+### 1. Configure the Module (Global/System Settings)
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -31,11 +45,6 @@ import { SmartQueryModule } from 'smart-query-nestjs';
 @Module({
   imports: [
     SmartQueryModule.forRoot({
-      searchableFields: ['full_name', 'email'],
-      filterableFields: ['full_name', 'email', 'is_active', 'status', 'shop_id'],
-      numberFields: ['age', 'price'],
-      booleanFields: ['is_active', 'is_verified'],
-      dateFields: ['created_at', 'updated_at'],
       defaultLimit: 10,
       maxLimit: 100,
     }),
@@ -44,26 +53,26 @@ import { SmartQueryModule } from 'smart-query-nestjs';
 export class AppModule {}
 ```
 
-### 2. Use in Controller
+Global configuration options:
+- `defaultLimit` - Default number of items per page (default: 10)
+- `maxLimit` - Maximum allowed items per page (default: 100)
+
+### 2. Use in Controller (Entity-Specific Settings)
 
 ```typescript
 import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { SmartQueryInterceptor, SmartQuery, buildSmartQuery } from 'smart-query-nestjs';
 
-const customerQueryConfig = {
-  searchableFields: ['full_name', 'email'],
-  filterableFields: ['full_name', 'email', 'is_active', 'status', 'shop_id', 'age'],
-  numberFields: ['age'],
-  booleanFields: ['is_active'],
-  dateFields: ['created_at'],
-  defaultLimit: 10,
-  maxLimit: 100,
-};
-
 @Controller('customers')
 export class CustomerController {
   @Get()
-  @UseInterceptors(new SmartQueryInterceptor(customerQueryConfig))
+  @UseInterceptors(new SmartQueryInterceptor({
+    searchableFields: ['full_name', 'email'],
+    filterableFields: ['full_name', 'email', 'is_active', 'status', 'shop_id', 'age'],
+    numberFields: ['age'],
+    booleanFields: ['is_active'],
+    dateFields: ['created_at'],
+  }))
   async findAll(@SmartQuery() query) {
     const dbQuery = buildSmartQuery(query, {
       shop_id: user.tenant_id,
@@ -77,6 +86,40 @@ export class CustomerController {
     return { data, total };
   }
 }
+```
+
+Query options (defined per-entity):
+- `searchableFields` - Fields to search when using `searchTerm` parameter
+- `filterableFields` - Fields that can be filtered
+- `numberFields` - Fields that should be parsed as numbers
+- `booleanFields` - Fields that should be parsed as booleans
+- `dateFields` - Fields that should be parsed as dates
+
+### Different Entities, Different Options
+
+Each controller/entity can have its own configuration:
+
+```typescript
+// For Customers
+@UseInterceptors(new SmartQueryInterceptor({
+  searchableFields: ['full_name', 'email'],
+  filterableFields: ['full_name', 'email', 'status', 'shop_id'],
+}))
+
+// For Products  
+@UseInterceptors(new SmartQueryInterceptor({
+  searchableFields: ['name', 'description', 'sku'],
+  filterableFields: ['name', 'category', 'price', 'is_active'],
+  numberFields: ['price', 'stock'],
+}))
+
+// For Orders
+@UseInterceptors(new SmartQueryInterceptor({
+  searchableFields: ['order_number'],
+  filterableFields: ['status', 'customer_id', 'total'],
+  numberFields: ['total'],
+  dateFields: ['created_at'],
+}))
 ```
 
 ## Supported Query Formats
@@ -163,21 +206,45 @@ This query will:
 
 ### Interfaces
 
-#### SmartQueryConfig
+#### SmartQueryModuleOptions
+
+Global configuration options for `SmartQueryModule.forRoot()`:
 
 ```typescript
-interface SmartQueryConfig {
-  searchableFields: string[];
-  filterableFields: string[];
+interface SmartQueryModuleOptions {
+  defaultLimit?: number;
+  maxLimit?: number;
+}
+```
+
+#### QueryOptions
+
+Entity-specific query options for interceptor:
+
+```typescript
+interface QueryOptions {
+  searchableFields?: string[];
+  filterableFields?: string[];
   numberFields?: string[];
   booleanFields?: string[];
   dateFields?: string[];
+}
+```
+
+#### SmartQueryConfig
+
+Full configuration (for backward compatibility):
+
+```typescript
+interface SmartQueryConfig extends QueryOptions {
   defaultLimit?: number;
   maxLimit?: number;
 }
 ```
 
 #### SmartQueryContext
+
+The context object injected into controllers:
 
 ```typescript
 interface SmartQueryContext {

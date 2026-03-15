@@ -1,4 +1,4 @@
-import { SmartQueryConfig } from '../interfaces';
+import { QueryOptions } from '../interfaces';
 
 interface SearchCondition {
   OR: Record<string, { contains: string; mode: string }>[];
@@ -6,18 +6,19 @@ interface SearchCondition {
 
 export function buildSearchConditions(
   searchTerm: string | undefined,
-  config: SmartQueryConfig,
+  options: QueryOptions,
 ): SearchCondition | null {
   if (!searchTerm || typeof searchTerm !== 'string' || !searchTerm.trim()) {
     return null;
   }
 
   const trimmedTerm = searchTerm.trim();
-  const searchableFieldsSet = new Set(config.searchableFields);
+  const searchableFields = options.searchableFields ?? [];
+  const searchableFieldsSet = new Set(searchableFields);
 
   const conditions: Record<string, { contains: string; mode: string }>[] = [];
 
-  for (const field of config.searchableFields) {
+  for (const field of searchableFields) {
     if (searchableFieldsSet.has(field)) {
       conditions.push({ [field]: { contains: trimmedTerm, mode: 'insensitive' } });
     }

@@ -1,12 +1,35 @@
 import { NestInterceptor, ExecutionContext, CallHandler, DynamicModule } from '@nestjs/common';
 import { Observable } from 'rxjs';
 
-interface SmartQueryConfig {
-    searchableFields: string[];
-    filterableFields: string[];
+/**
+ * Global configuration options for SmartQueryModule.
+ * Only includes system-level settings that apply to all entities.
+ */
+interface SmartQueryModuleOptions {
+    defaultLimit?: number;
+    maxLimit?: number;
+}
+/**
+ * Query-level options for defining entity-specific searchable and filterable fields.
+ * These should be defined per-entity/controller, not globally.
+ */
+interface QueryOptions {
+    /** Fields to search when using the searchTerm query parameter */
+    searchableFields?: string[];
+    /** Fields that can be filtered via query parameters */
+    filterableFields?: string[];
+    /** Fields that should be parsed as numbers for range filtering */
     numberFields?: string[];
+    /** Fields that should be parsed as booleans */
     booleanFields?: string[];
+    /** Fields that should be parsed as dates for range filtering */
     dateFields?: string[];
+}
+/**
+ * Full configuration interface.
+ * @deprecated Define searchable/filterable fields per-entity using SmartQueryInterceptor options instead.
+ */
+interface SmartQueryConfig extends QueryOptions {
     defaultLimit?: number;
     maxLimit?: number;
 }
@@ -34,19 +57,59 @@ interface SearchCondition {
         mode: string;
     }>[];
 }
-declare function buildSearchConditions(searchTerm: string | undefined, config: SmartQueryConfig): SearchCondition | null;
+declare function buildSearchConditions(searchTerm: string | undefined, options: QueryOptions): SearchCondition | null;
 
-declare function parseFilters(query: Record<string, unknown>, config: SmartQueryConfig): Record<string, unknown>;
+declare function parseFilters(query: Record<string, unknown>, options: QueryOptions): Record<string, unknown>;
 
-declare function parsePagination(query: Record<string, unknown>, config: SmartQueryConfig): PaginationOptions;
+interface PaginationConfig {
+    defaultLimit?: number;
+    maxLimit?: number;
+}
+declare function parsePagination(query: Record<string, unknown>, config: PaginationConfig): PaginationOptions;
 
 declare const SMART_QUERY_CONFIG = "SMART_QUERY_CONFIG";
+/**
+ * Options for the SmartQueryInterceptor.
+ * These should be defined per-entity/controller to specify which fields are searchable and filterable.
+ *
+ * @example
+ * ```typescript
+ * @UseInterceptors(new SmartQueryInterceptor({
+ *   searchableFields: ['name', 'email'],
+ *   filterableFields: ['role', 'status', 'age'],
+ *   numberFields: ['age'],
+ *   booleanFields: ['isActive'],
+ * }))
+ * ```
+ */
+interface SmartQueryInterceptorOptions extends QueryOptions {
+    /** Override default limit for this specific endpoint */
+    defaultLimit?: number;
+    /** Override max limit for this specific endpoint */
+    maxLimit?: number;
+}
 declare class SmartQueryInterceptor implements NestInterceptor {
     private readonly config;
-    constructor(config: SmartQueryConfig);
+    constructor(interceptorOptions?: SmartQueryInterceptorOptions, globalConfig?: SmartQueryConfig);
     intercept(context: ExecutionContext, next: CallHandler): Observable<unknown>;
 }
-declare function createSmartQueryInterceptor(config: SmartQueryConfig): SmartQueryInterceptor;
+/**
+ * Factory function to create a SmartQueryInterceptor with specific options.
+ * Use this when you need to create the interceptor programmatically.
+ *
+ * @param config - Entity-specific query options
+ * @returns Configured SmartQueryInterceptor instance
+ *
+ * @example
+ * ```typescript
+ * const interceptor = createSmartQueryInterceptor({
+ *   searchableFields: ['title', 'description'],
+ *   filterableFields: ['category', 'price', 'status'],
+ *   numberFields: ['price'],
+ * });
+ * ```
+ */
+declare function createSmartQueryInterceptor(config: SmartQueryInterceptorOptions): SmartQueryInterceptor;
 
 declare const SmartQuery: (...dataOrPipes: unknown[]) => ParameterDecorator;
 
@@ -66,7 +129,7 @@ interface SmartQueryResult {
 declare function buildSmartQuery(context: SmartQueryContext, ...extraConditions: Record<string, unknown>[]): SmartQueryResult;
 
 declare class SmartQueryModule {
-    static forRoot(config: SmartQueryConfig): DynamicModule;
+    static forRoot(config?: SmartQueryModuleOptions & Partial<SmartQueryConfig>): DynamicModule;
 }
 
-export { type BuildSmartQueryOptions, type PaginationOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, SmartQueryModule, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, pick };
+export { type BuildSmartQueryOptions, type PaginationOptions, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, pick };

@@ -3,8 +3,10 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Inject,
+  Optional,
 } from '@nestjs/common';
-import type { SmartQueryConfig, SmartQueryContext } from '../interfaces';
+import type { SmartQueryConfig, SmartQueryContext, QueryOptions } from '../interfaces';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { parseQueryString } from '../utils';
@@ -14,21 +16,78 @@ import { parsePagination } from '../parsers/pagination.parser';
 
 export const SMART_QUERY_CONFIG = 'SMART_QUERY_CONFIG';
 
+/**
+ * Options for the SmartQueryInterceptor.
+ * These should be defined per-entity/controller to specify which fields are searchable and filterable.
+ * 
+ * @example
+ * ```typescript
+ * @UseInterceptors(new SmartQueryInterceptor({
+ *   searchableFields: ['name', 'email'],
+ *   filterableFields: ['role', 'status', 'age'],
+ *   numberFields: ['age'],
+ *   booleanFields: ['isActive'],
+ * }))
+ * ```
+ */
+export interface SmartQueryInterceptorOptions extends QueryOptions {
+  /** Override default limit for this specific endpoint */
+  defaultLimit?: number;
+  /** Override max limit for this specific endpoint */
+  maxLimit?: number;
+}
+
+function mergeConfig(
+  interceptorOptions: SmartQueryInterceptorOptions | undefined,
+  globalConfig: SmartQueryConfig | undefined,
+): SmartQueryConfig {
+  const global: SmartQueryConfig = {
+    searchableFields: globalConfig?.searchableFields ?? [],
+    filterableFields: globalConfig?.filterableFields ?? [],
+    numberFields: globalConfig?.numberFields ?? [],
+    booleanFields: globalConfig?.booleanFields ?? [],
+    dateFields: globalConfig?.dateFields ?? [],
+    defaultLimit: globalConfig?.defaultLimit ?? 10,
+    maxLimit: globalConfig?.maxLimit ?? 100,
+  };
+
+  if (!interceptorOptions) {
+    return global;
+  }
+
+  return {
+    searchableFields: interceptorOptions.searchableFields ?? global.searchableFields,
+    filterableFields: interceptorOptions.filterableFields ?? global.filterableFields,
+    numberFields: interceptorOptions.numberFields ?? global.numberFields,
+    booleanFields: interceptorOptions.booleanFields ?? global.booleanFields,
+    dateFields: interceptorOptions.dateFields ?? global.dateFields,
+    defaultLimit: interceptorOptions.defaultLimit ?? global.defaultLimit,
+    maxLimit: interceptorOptions.maxLimit ?? global.maxLimit,
+  };
+}
+
 @Injectable()
+/**
+ * NestJS interceptor that parses query parameters for search, filter, pagination, and sorting.
+ * 
+ * Define searchable and filterable fields per-entity using the options parameter.
+ * 
+ * @example
+ * ```typescript
+ * @UseInterceptors(new SmartQueryInterceptor({
+ *   searchableFields: ['name', 'email'],
+ *   filterableFields: ['name', 'email', 'status', 'role'],
+ * }))
+ * ```
+ */
 export class SmartQueryInterceptor implements NestInterceptor {
   private readonly config: SmartQueryConfig;
 
-  constructor(config: SmartQueryConfig) {
-    const defaults: SmartQueryConfig = {
-      searchableFields: [],
-      filterableFields: [],
-      numberFields: [],
-      booleanFields: [],
-      dateFields: [],
-      defaultLimit: 10,
-      maxLimit: 100,
-    };
-    this.config = { ...defaults, ...config };
+  constructor(
+    @Optional() interceptorOptions?: SmartQueryInterceptorOptions,
+    @Optional() @Inject(SMART_QUERY_CONFIG) globalConfig?: SmartQueryConfig,
+  ) {
+    this.config = mergeConfig(interceptorOptions, globalConfig);
   }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -78,6 +137,22 @@ export class SmartQueryInterceptor implements NestInterceptor {
   }
 }
 
-export function createSmartQueryInterceptor(config: SmartQueryConfig): SmartQueryInterceptor {
+/**
+ * Factory function to create a SmartQueryInterceptor with specific options.
+ * Use this when you need to create the interceptor programmatically.
+ * 
+ * @param config - Entity-specific query options
+ * @returns Configured SmartQueryInterceptor instance
+ * 
+ * @example
+ * ```typescript
+ * const interceptor = createSmartQueryInterceptor({
+ *   searchableFields: ['title', 'description'],
+ *   filterableFields: ['category', 'price', 'status'],
+ *   numberFields: ['price'],
+ * });
+ * ```
+ */
+export function createSmartQueryInterceptor(config: SmartQueryInterceptorOptions): SmartQueryInterceptor {
   return new SmartQueryInterceptor(config);
 }

@@ -39,6 +39,7 @@ var __decorateClass = (decorators, target, key, kind) => {
       result = (decorator(result)) || result;
   return result;
 };
+var __decorateParam = (index, decorator) => (target, key) => decorator(target, key, index);
 
 // node_modules/rxjs/dist/cjs/internal/util/isFunction.js
 var require_isFunction = __commonJS({
@@ -7588,14 +7589,15 @@ function pick(obj, keys) {
 }
 
 // src/parsers/search.parser.ts
-function buildSearchConditions(searchTerm, config) {
+function buildSearchConditions(searchTerm, options) {
   if (!searchTerm || typeof searchTerm !== "string" || !searchTerm.trim()) {
     return null;
   }
   const trimmedTerm = searchTerm.trim();
-  const searchableFieldsSet = new Set(config.searchableFields);
+  const searchableFields = options.searchableFields ?? [];
+  const searchableFieldsSet = new Set(searchableFields);
   const conditions = [];
-  for (const field of config.searchableFields) {
+  for (const field of searchableFields) {
     if (searchableFieldsSet.has(field)) {
       conditions.push({ [field]: { contains: trimmedTerm, mode: "insensitive" } });
     }
@@ -7607,12 +7609,12 @@ function buildSearchConditions(searchTerm, config) {
 }
 
 // src/parsers/filter.parser.ts
-function parseFilters(query, config) {
+function parseFilters(query, options) {
   const result = {};
-  const filterableFieldsSet = new Set(config.filterableFields);
-  const numberFieldsSet = new Set(config.numberFields ?? []);
-  const booleanFieldsSet = new Set(config.booleanFields ?? []);
-  const dateFieldsSet = new Set(config.dateFields ?? []);
+  const filterableFieldsSet = new Set(options.filterableFields ?? []);
+  const numberFieldsSet = new Set(options.numberFields ?? []);
+  const booleanFieldsSet = new Set(options.booleanFields ?? []);
+  const dateFieldsSet = new Set(options.dateFields ?? []);
   const paginationKeys = /* @__PURE__ */ new Set(["page", "limit", "sortBy", "sortOrder", "searchTerm"]);
   for (const [key, value] of Object.entries(query)) {
     if (paginationKeys.has(key) || key.startsWith("searchTerm")) {
@@ -7814,18 +7816,32 @@ function clampLimit(value, defaultLimit, maxLimit) {
 // src/interceptors/smart-query.interceptor.ts
 var import_operators = __toESM(require_operators());
 var SMART_QUERY_CONFIG = "SMART_QUERY_CONFIG";
+function mergeConfig(interceptorOptions, globalConfig) {
+  const global = {
+    searchableFields: globalConfig?.searchableFields ?? [],
+    filterableFields: globalConfig?.filterableFields ?? [],
+    numberFields: globalConfig?.numberFields ?? [],
+    booleanFields: globalConfig?.booleanFields ?? [],
+    dateFields: globalConfig?.dateFields ?? [],
+    defaultLimit: globalConfig?.defaultLimit ?? 10,
+    maxLimit: globalConfig?.maxLimit ?? 100
+  };
+  if (!interceptorOptions) {
+    return global;
+  }
+  return {
+    searchableFields: interceptorOptions.searchableFields ?? global.searchableFields,
+    filterableFields: interceptorOptions.filterableFields ?? global.filterableFields,
+    numberFields: interceptorOptions.numberFields ?? global.numberFields,
+    booleanFields: interceptorOptions.booleanFields ?? global.booleanFields,
+    dateFields: interceptorOptions.dateFields ?? global.dateFields,
+    defaultLimit: interceptorOptions.defaultLimit ?? global.defaultLimit,
+    maxLimit: interceptorOptions.maxLimit ?? global.maxLimit
+  };
+}
 exports.SmartQueryInterceptor = class SmartQueryInterceptor {
-  constructor(config) {
-    const defaults = {
-      searchableFields: [],
-      filterableFields: [],
-      numberFields: [],
-      booleanFields: [],
-      dateFields: [],
-      defaultLimit: 10,
-      maxLimit: 100
-    };
-    this.config = { ...defaults, ...config };
+  constructor(interceptorOptions, globalConfig) {
+    this.config = mergeConfig(interceptorOptions, globalConfig);
   }
   intercept(context, next) {
     const request = context.switchToHttp().getRequest();
@@ -7866,7 +7882,10 @@ exports.SmartQueryInterceptor = class SmartQueryInterceptor {
   }
 };
 exports.SmartQueryInterceptor = __decorateClass([
-  common.Injectable()
+  common.Injectable(),
+  __decorateParam(0, common.Optional()),
+  __decorateParam(1, common.Optional()),
+  __decorateParam(1, common.Inject(SMART_QUERY_CONFIG))
 ], exports.SmartQueryInterceptor);
 function createSmartQueryInterceptor(config) {
   return new exports.SmartQueryInterceptor(config);
@@ -7901,10 +7920,19 @@ function buildSmartQuery(context, ...extraConditions) {
   };
 }
 exports.SmartQueryModule = class SmartQueryModule {
-  static forRoot(config) {
+  static forRoot(config = {}) {
+    const moduleConfig = {
+      defaultLimit: config.defaultLimit,
+      maxLimit: config.maxLimit,
+      searchableFields: config.searchableFields ?? [],
+      filterableFields: config.filterableFields ?? [],
+      numberFields: config.numberFields ?? [],
+      booleanFields: config.booleanFields ?? [],
+      dateFields: config.dateFields ?? []
+    };
     const configProvider = {
       provide: SMART_QUERY_CONFIG,
-      useValue: config
+      useValue: moduleConfig
     };
     return {
       module: exports.SmartQueryModule,

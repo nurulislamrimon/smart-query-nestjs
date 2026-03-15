@@ -1,12 +1,16 @@
 import { PaginationOptions } from '../interfaces';
-import { SmartQueryConfig } from '../interfaces/smart-query-config.interface';
+
+interface PaginationConfig {
+  defaultLimit?: number;
+  maxLimit?: number;
+}
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
 export function parsePagination(
   query: Record<string, unknown>,
-  config: SmartQueryConfig,
+  config: PaginationConfig,
 ): PaginationOptions {
   const pageParam = query.page;
   const limitParam = query.limit;

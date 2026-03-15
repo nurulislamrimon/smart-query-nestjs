@@ -1,4 +1,4 @@
-import { SmartQueryConfig } from '../interfaces';
+import { QueryOptions } from '../interfaces';
 
 type FilterOperator = 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'contains' | 'startsWith' | 'endsWith';
 
@@ -10,13 +10,13 @@ interface ParsedFilter {
 
 export function parseFilters(
   query: Record<string, unknown>,
-  config: SmartQueryConfig,
+  options: QueryOptions,
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
-  const filterableFieldsSet = new Set(config.filterableFields);
-  const numberFieldsSet = new Set(config.numberFields ?? []);
-  const booleanFieldsSet = new Set(config.booleanFields ?? []);
-  const dateFieldsSet = new Set(config.dateFields ?? []);
+  const filterableFieldsSet = new Set(options.filterableFields ?? []);
+  const numberFieldsSet = new Set(options.numberFields ?? []);
+  const booleanFieldsSet = new Set(options.booleanFields ?? []);
+  const dateFieldsSet = new Set(options.dateFields ?? []);
 
   const paginationKeys = new Set(['page', 'limit', 'sortBy', 'sortOrder', 'searchTerm']);
 
