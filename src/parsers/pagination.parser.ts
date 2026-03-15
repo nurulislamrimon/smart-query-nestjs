@@ -8,6 +8,27 @@ interface PaginationConfig {
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
+export function parseSort(
+  sort?: string,
+  sortBy?: unknown,
+  sortOrder?: unknown,
+): Record<string, 'asc' | 'desc'>[] {
+  if (sort && typeof sort === 'string') {
+    return parseSort(sort);
+  }
+
+  if (sortBy && typeof sortBy === 'string') {
+    const order: 'asc' | 'desc' =
+      sortOrder === 'desc' ||
+      (typeof sortOrder === 'string' && sortOrder.toLowerCase() === 'desc')
+        ? 'desc'
+        : 'asc';
+    return [{ [sortBy]: order }];
+  }
+
+  return [];
+}
+
 export function parsePagination(
   query: Record<string, unknown>,
   config: PaginationConfig,

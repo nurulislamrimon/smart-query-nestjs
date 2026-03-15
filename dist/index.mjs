@@ -7754,6 +7754,16 @@ function buildStringFilter(operator, value) {
 // src/parsers/pagination.parser.ts
 var DEFAULT_PAGE = 1;
 var DEFAULT_LIMIT = 10;
+function parseSort(sort, sortBy, sortOrder) {
+  if (sort && typeof sort === "string") {
+    return parseSort(sort);
+  }
+  if (sortBy && typeof sortBy === "string") {
+    const order = sortOrder === "desc" || typeof sortOrder === "string" && sortOrder.toLowerCase() === "desc" ? "desc" : "asc";
+    return [{ [sortBy]: order }];
+  }
+  return [];
+}
 function parsePagination(query, config) {
   const pageParam = query.page;
   const limitParam = query.limit;
@@ -7845,6 +7855,11 @@ var SmartQueryInterceptor = class {
     const filters = parseFilters(parsedQuery, this.config);
     const searchConditions = buildSearchConditions(searchTerm, this.config);
     const pagination = parsePagination(parsedQuery, this.config);
+    const orderBy = parseSort(
+      parsedQuery.sort,
+      parsedQuery.sortBy,
+      parsedQuery.sortOrder
+    );
     const where = {};
     if (Object.keys(filters).length > 0) {
       Object.assign(where, filters);
@@ -7854,6 +7869,7 @@ var SmartQueryInterceptor = class {
     }
     const smartQueryContext = {
       where,
+      orderBy,
       pagination
     };
     request.smartQuery = smartQueryContext;
@@ -7893,7 +7909,7 @@ var SmartQuery = createParamDecorator(
 
 // src/builders/smart-query.builder.ts
 function buildSmartQuery(context, ...extraConditions) {
-  const { where, pagination } = context;
+  const { where, orderBy, pagination } = context;
   let finalWhere;
   if (extraConditions.length === 0) {
     finalWhere = where;
@@ -7902,12 +7918,10 @@ function buildSmartQuery(context, ...extraConditions) {
   } else {
     finalWhere = { AND: [where, ...extraConditions] };
   }
-  const orderBy = {
-    [pagination.sortBy]: pagination.sortOrder
-  };
+  const finalOrderBy = orderBy.length > 0 ? orderBy : [{ [pagination.sortBy]: pagination.sortOrder }];
   return {
     where: finalWhere,
-    orderBy,
+    orderBy: finalOrderBy,
     skip: pagination.skip,
     take: pagination.limit,
     page: pagination.page
@@ -7940,6 +7954,6 @@ SmartQueryModule = __decorateClass([
   Module({})
 ], SmartQueryModule);
 
-export { SMART_QUERY_CONFIG, SmartQuery, SmartQueryInterceptor, SmartQueryModule, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, pick };
+export { SMART_QUERY_CONFIG, SmartQuery, SmartQueryInterceptor, SmartQueryModule, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, parseSort, pick };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

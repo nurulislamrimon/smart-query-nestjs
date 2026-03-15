@@ -12,7 +12,7 @@ import { map } from 'rxjs/operators';
 import { parseQueryString } from '../utils';
 import { buildSearchConditions } from '../parsers/search.parser';
 import { parseFilters } from '../parsers/filter.parser';
-import { parsePagination } from '../parsers/pagination.parser';
+import { parsePagination, parseSort } from '../parsers/pagination.parser';
 
 export const SMART_QUERY_CONFIG = 'SMART_QUERY_CONFIG';
 
@@ -100,6 +100,11 @@ export class SmartQueryInterceptor implements NestInterceptor {
     const filters = parseFilters(parsedQuery, this.config);
     const searchConditions = buildSearchConditions(searchTerm, this.config);
     const pagination = parsePagination(parsedQuery, this.config);
+    const orderBy = parseSort(
+      parsedQuery.sort as string | undefined,
+      parsedQuery.sortBy,
+      parsedQuery.sortOrder,
+    );
 
     const where: Record<string, unknown> = {};
 
@@ -113,6 +118,7 @@ export class SmartQueryInterceptor implements NestInterceptor {
 
     const smartQueryContext: SmartQueryContext = {
       where,
+      orderBy,
       pagination,
     };
 

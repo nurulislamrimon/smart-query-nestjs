@@ -10,10 +10,11 @@ A high-performance, ORM-agnostic NestJS library for search, filtering, paginatio
 - **Array Filtering** - IN queries for multiple values
 - **Nested Relation Filtering** - Filter by related entity fields
 - **Pagination** - Page-based pagination with configurable limits
-- **Sorting** - Sort by any field in ascending or descending order
+- **Multi-field Sorting** - Sort by multiple fields with ascending/descending order
+- **Prisma-optimized Queries** - Returns Prisma-compatible orderBy arrays
+- **Type-safe Query Results** - Full TypeScript generics support
 - **ORM Agnostic** - Generates query objects compatible with any database layer (Prisma, TypeORM, etc.)
 - **High Performance** - Optimized parsing with single query parse and O(1) field lookups
-- **Full TypeScript Support** - Generic types for type-safe query handling
 
 ## Installation
 
@@ -62,14 +63,19 @@ export class CustomerController {
     dateFields: ['created_at'],
   }))
   async findAll(@SmartQuery() query: SmartQueryResult<Prisma.CustomerWhereInput>) {
-    const { where, pagination } = query;
+    const { where, orderBy, pagination } = query;
 
     const dbQuery = buildSmartQuery(query, {
       shop_id: user.tenant_id,
     });
 
     const [data, total] = await Promise.all([
-      this.prisma.customer.findMany(dbQuery),
+      this.prisma.customer.findMany({
+        where: dbQuery.where,
+        orderBy: dbQuery.orderBy,
+        skip: dbQuery.skip,
+        take: dbQuery.take,
+      }),
       this.prisma.customer.count({ where: dbQuery.where }),
     ]);
 
@@ -145,6 +151,27 @@ GET /customers?page=2&limit=20
 
 ### Sorting
 
+#### New Multi-field Syntax (Recommended)
+
+```
+GET /customers?sort=name,-createdAt
+```
+
+- `name` → ascending
+- `-createdAt` → descending
+- Comma-separated values for multiple sort fields
+
+Generated Prisma query:
+
+```ts
+orderBy: [
+  { name: 'asc' },
+  { createdAt: 'desc' }
+]
+```
+
+#### Legacy Syntax (Backward Compatible)
+
 ```
 GET /customers?sortBy=created_at&sortOrder=desc
 ```
@@ -155,7 +182,7 @@ GET /customers?sortBy=created_at&sortOrder=desc
 ## Combined Example
 
 ```
-GET /customers?searchTerm=john&status[]=active&age[gte]=18&page=1&limit=20&sortBy=created_at&sortOrder=desc
+GET /customers?searchTerm=john&status[]=active&age[gte]=18&page=1&limit=20&sort=name,-createdAt
 ```
 
 This query will:
@@ -163,13 +190,13 @@ This query will:
 - Filter by status "active"
 - Filter by age >= 18
 - Return page 1 with 20 items per page
-- Sort by created_at in descending order
+- Sort by name ascending, then by createdAt descending
 
 ## TypeScript Support
 
 ### SmartQueryResult Type
 
-The package exports `SmartQueryResult<TWhere>` for full TypeScript support:
+The package exports `SmartQueryResult<TWhere, TOrderBy>` for full TypeScript support:
 
 ```typescript
 import { SmartQuery, SmartQueryResult, SmartQueryInterceptor } from 'smart-query-nestjs';
@@ -183,11 +210,22 @@ export class CustomerController {
     filterableFields: ['full_name', 'email', 'is_active', 'status'],
   }))
   async findAll(
-    @SmartQuery() query: SmartQueryResult<Prisma.CustomerWhereInput>
+    @SmartQuery() query: SmartQueryResult<
+      Prisma.CustomerWhereInput,
+      Prisma.CustomerOrderByWithRelationInput
+    >
   ) {
-    const { where, pagination } = query;
+    const { where, orderBy, pagination } = query;
     // where: Prisma.CustomerWhereInput
-    // pagination: { page, limit, skip, sortBy, sortOrder }
+    // orderBy: Prisma.CustomerOrderByWithRelationInput[]
+    // pagination: { page, limit, skip }
+
+    return this.prisma.customer.findMany({
+      where,
+      orderBy,
+      skip: pagination.skip,
+      take: pagination.limit,
+    });
   }
 }
 ```
@@ -199,16 +237,18 @@ interface SmartQueryPagination {
   page: number;
   limit: number;
   skip: number;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
 }
 ```
 
 #### SmartQueryResult
 
 ```typescript
-type SmartQueryResult<TWhere = unknown> = {
+type SmartQueryResult<
+  TWhere = unknown,
+  TOrderBy = Record<string, 'asc' | 'desc'>
+> = {
   where: TWhere;
+  orderBy: TOrderBy[];
   pagination: SmartQueryPagination;
 };
 ```
@@ -274,7 +314,7 @@ Extracts the SmartQueryResult from the request.
 ```typescript
 @Get()
 async findAll(@SmartQuery() query: SmartQueryResult) {
-  const { where, pagination } = query;
+  const { where, orderBy, pagination } = query;
   // ...
 }
 ```

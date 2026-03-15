@@ -2,11 +2,13 @@ export interface SmartQueryPagination {
   page: number;
   limit: number;
   skip: number;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
 }
 
-export type SmartQueryResult<TWhere = unknown> = {
+export type SmartQueryResult<
+  TWhere = unknown,
+  TOrderBy = Record<string, 'asc' | 'desc'>
+> = {
   where: TWhere;
+  orderBy: TOrderBy[];
   pagination: SmartQueryPagination;
 };

@@ -2,14 +2,14 @@ import { SmartQueryContext } from '../interfaces';
 
 export interface BuildSmartQueryOptions {
   where?: Record<string, unknown>;
-  orderBy?: Record<string, 'asc' | 'desc'>;
+  orderBy?: Record<string, 'asc' | 'desc'>[];
   skip?: number;
   take?: number;
 }
 
 export interface BuiltSmartQuery {
   where: Record<string, unknown>;
-  orderBy: Record<string, 'asc' | 'desc'>;
+  orderBy: Record<string, 'asc' | 'desc'>[];
   skip: number;
   take: number;
   page: number;
@@ -19,7 +19,7 @@ export function buildSmartQuery(
   context: SmartQueryContext,
   ...extraConditions: Record<string, unknown>[]
 ): BuiltSmartQuery {
-  const { where, pagination } = context;
+  const { where, orderBy, pagination } = context;
 
   let finalWhere: Record<string, unknown>;
 
@@ -31,13 +31,14 @@ export function buildSmartQuery(
     finalWhere = { AND: [where, ...extraConditions] };
   }
 
-  const orderBy: Record<string, 'asc' | 'desc'> = {
-    [pagination.sortBy]: pagination.sortOrder,
-  };
+  const finalOrderBy =
+    orderBy.length > 0
+      ? orderBy
+      : [{ [pagination.sortBy]: pagination.sortOrder }];
 
   return {
     where: finalWhere,
-    orderBy,
+    orderBy: finalOrderBy,
     skip: pagination.skip,
     take: pagination.limit,
     page: pagination.page,

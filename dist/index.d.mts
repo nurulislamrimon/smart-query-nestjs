@@ -44,6 +44,7 @@ interface PaginationOptions {
 
 interface SmartQueryContext {
     where: Record<string, unknown>;
+    orderBy: Record<string, 'asc' | 'desc'>[];
     pagination: PaginationOptions;
 }
 
@@ -65,6 +66,7 @@ interface PaginationConfig {
     defaultLimit?: number;
     maxLimit?: number;
 }
+declare function parseSort(sort?: string, sortBy?: unknown, sortOrder?: unknown): Record<string, 'asc' | 'desc'>[];
 declare function parsePagination(query: Record<string, unknown>, config: PaginationConfig): PaginationOptions;
 
 declare const SMART_QUERY_CONFIG = "SMART_QUERY_CONFIG";
@@ -115,13 +117,13 @@ declare const SmartQuery: (...dataOrPipes: unknown[]) => ParameterDecorator;
 
 interface BuildSmartQueryOptions {
     where?: Record<string, unknown>;
-    orderBy?: Record<string, 'asc' | 'desc'>;
+    orderBy?: Record<string, 'asc' | 'desc'>[];
     skip?: number;
     take?: number;
 }
 interface BuiltSmartQuery {
     where: Record<string, unknown>;
-    orderBy: Record<string, 'asc' | 'desc'>;
+    orderBy: Record<string, 'asc' | 'desc'>[];
     skip: number;
     take: number;
     page: number;
@@ -136,12 +138,11 @@ interface SmartQueryPagination {
     page: number;
     limit: number;
     skip: number;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
 }
-type SmartQueryResult<TWhere = unknown> = {
+type SmartQueryResult<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'>> = {
     where: TWhere;
+    orderBy: TOrderBy[];
     pagination: SmartQueryPagination;
 };
 
-export { type BuildSmartQueryOptions, type BuiltSmartQuery, type PaginationOptions, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryPagination, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, pick };
+export { type BuildSmartQueryOptions, type BuiltSmartQuery, type PaginationOptions, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryPagination, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, parseSort, pick };
