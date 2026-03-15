@@ -13,6 +13,7 @@ A high-performance, ORM-agnostic NestJS library for search, filtering, paginatio
 - **Sorting** - Sort by any field in ascending or descending order
 - **ORM Agnostic** - Generates query objects compatible with any database layer (Prisma, TypeORM, etc.)
 - **High Performance** - Optimized parsing with single query parse and O(1) field lookups
+- **Full TypeScript Support** - Generic types for type-safe query handling
 
 ## Installation
 
@@ -20,23 +21,9 @@ A high-performance, ORM-agnostic NestJS library for search, filtering, paginatio
 npm install smart-query-nestjs
 ```
 
-## Architecture
-
-This library follows a two-level configuration architecture:
-
-1. **Global Configuration** (`SmartQueryModule.forRoot()`) - System-level settings that apply globally
-2. **Query Options** - Entity-specific settings defined at the interceptor level
-
-### Why This Architecture?
-
-Searchable and filterable fields are **model-specific**. Different entities (User, Product, Order, etc.) require different fields. Defining these globally was poor architecture because:
-- You'd need to define all possible fields for all entities in one place
-- Adding a new entity required updating the global config
-- It's not clear which fields belong to which entity
-
 ## Quick Start
 
-### 1. Configure the Module (Global/System Settings)
+### 1. Configure the Module (Optional - Global Settings)
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -57,11 +44,12 @@ Global configuration options:
 - `defaultLimit` - Default number of items per page (default: 10)
 - `maxLimit` - Maximum allowed items per page (default: 100)
 
-### 2. Use in Controller (Entity-Specific Settings)
+### 2. Use in Controller
 
 ```typescript
 import { Controller, Get, UseInterceptors } from '@nestjs/common';
-import { SmartQueryInterceptor, SmartQuery, buildSmartQuery } from 'smart-query-nestjs';
+import { SmartQueryInterceptor, SmartQuery, buildSmartQuery, SmartQueryResult } from 'smart-query-nestjs';
+import { Prisma } from '@prisma/client';
 
 @Controller('customers')
 export class CustomerController {
@@ -73,7 +61,9 @@ export class CustomerController {
     booleanFields: ['is_active'],
     dateFields: ['created_at'],
   }))
-  async findAll(@SmartQuery() query) {
+  async findAll(@SmartQuery() query: SmartQueryResult<Prisma.CustomerWhereInput>) {
+    const { where, pagination } = query;
+
     const dbQuery = buildSmartQuery(query, {
       shop_id: user.tenant_id,
     });
@@ -94,33 +84,6 @@ Query options (defined per-entity):
 - `numberFields` - Fields that should be parsed as numbers
 - `booleanFields` - Fields that should be parsed as booleans
 - `dateFields` - Fields that should be parsed as dates
-
-### Different Entities, Different Options
-
-Each controller/entity can have its own configuration:
-
-```typescript
-// For Customers
-@UseInterceptors(new SmartQueryInterceptor({
-  searchableFields: ['full_name', 'email'],
-  filterableFields: ['full_name', 'email', 'status', 'shop_id'],
-}))
-
-// For Products  
-@UseInterceptors(new SmartQueryInterceptor({
-  searchableFields: ['name', 'description', 'sku'],
-  filterableFields: ['name', 'category', 'price', 'is_active'],
-  numberFields: ['price', 'stock'],
-}))
-
-// For Orders
-@UseInterceptors(new SmartQueryInterceptor({
-  searchableFields: ['order_number'],
-  filterableFields: ['status', 'customer_id', 'total'],
-  numberFields: ['total'],
-  dateFields: ['created_at'],
-}))
-```
 
 ## Supported Query Formats
 
@@ -202,6 +165,54 @@ This query will:
 - Return page 1 with 20 items per page
 - Sort by created_at in descending order
 
+## TypeScript Support
+
+### SmartQueryResult Type
+
+The package exports `SmartQueryResult<TWhere>` for full TypeScript support:
+
+```typescript
+import { SmartQuery, SmartQueryResult, SmartQueryInterceptor } from 'smart-query-nestjs';
+import { Prisma } from '@prisma/client';
+
+@Controller('customers')
+export class CustomerController {
+  @Get()
+  @UseInterceptors(new SmartQueryInterceptor({
+    searchableFields: ['full_name', 'email'],
+    filterableFields: ['full_name', 'email', 'is_active', 'status'],
+  }))
+  async findAll(
+    @SmartQuery() query: SmartQueryResult<Prisma.CustomerWhereInput>
+  ) {
+    const { where, pagination } = query;
+    // where: Prisma.CustomerWhereInput
+    // pagination: { page, limit, skip, sortBy, sortOrder }
+  }
+}
+```
+
+#### SmartQueryPagination
+
+```typescript
+interface SmartQueryPagination {
+  page: number;
+  limit: number;
+  skip: number;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+```
+
+#### SmartQueryResult
+
+```typescript
+type SmartQueryResult<TWhere = unknown> = {
+  where: TWhere;
+  pagination: SmartQueryPagination;
+};
+```
+
 ## API Reference
 
 ### Interfaces
@@ -242,17 +253,6 @@ interface SmartQueryConfig extends QueryOptions {
 }
 ```
 
-#### SmartQueryContext
-
-The context object injected into controllers:
-
-```typescript
-interface SmartQueryContext {
-  where: Record<string, unknown>;
-  pagination: PaginationOptions;
-}
-```
-
 #### PaginationOptions
 
 ```typescript
@@ -262,6 +262,20 @@ interface PaginationOptions {
   skip: number;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
+}
+```
+
+### Decorators
+
+#### @SmartQuery()
+
+Extracts the SmartQueryResult from the request.
+
+```typescript
+@Get()
+async findAll(@SmartQuery() query: SmartQueryResult) {
+  const { where, pagination } = query;
+  // ...
 }
 ```
 
@@ -276,17 +290,36 @@ const result = buildSmartQuery(query, { shop_id: 1 });
 // Returns: { where, orderBy, skip, take, page }
 ```
 
-### Decorators
+#### createSmartQueryInterceptor(config)
 
-#### @SmartQuery()
-
-Extracts the SmartQueryContext from the request.
+Factory function to create a SmartQueryInterceptor with specific options.
 
 ```typescript
-@Get()
-async findAll(@SmartQuery() query: SmartQueryContext) {
-  // ...
-}
+const interceptor = createSmartQueryInterceptor({
+  searchableFields: ['title', 'description'],
+  filterableFields: ['category', 'price', 'status'],
+  numberFields: ['price'],
+});
+```
+
+### Utility Functions
+
+#### parseQueryString(queryString)
+
+Parses a query string into an object.
+
+```typescript
+const parsed = parseQueryString('page=1&limit=10&searchTerm=foo');
+// Returns: { page: 1, limit: 10, searchTerm: 'foo' }
+```
+
+#### pick(obj, keys)
+
+Pick specific keys from an object.
+
+```typescript
+const picked = pick(user, ['id', 'name', 'email']);
+// Returns: { id: ..., name: ..., email: ... }
 ```
 
 ## Performance Optimizations
@@ -297,6 +330,47 @@ The library includes several performance optimizations:
 2. **O(1) Field Lookups** - Uses `Set` for field lookups instead of array includes
 3. **Modular Architecture** - Separates concerns into dedicated parsers
 4. **No Unnecessary Cloning** - Avoids deep object cloning where possible
+
+## Different Entities, Different Options
+
+Each controller/entity can have its own configuration:
+
+```typescript
+// For Customers
+@UseInterceptors(new SmartQueryInterceptor({
+  searchableFields: ['full_name', 'email'],
+  filterableFields: ['full_name', 'email', 'status', 'shop_id'],
+}))
+
+// For Products  
+@UseInterceptors(new SmartQueryInterceptor({
+  searchableFields: ['name', 'description', 'sku'],
+  filterableFields: ['name', 'category', 'price', 'is_active'],
+  numberFields: ['price', 'stock'],
+}))
+
+// For Orders
+@UseInterceptors(new SmartQueryInterceptor({
+  searchableFields: ['order_number'],
+  filterableFields: ['status', 'customer_id', 'total'],
+  numberFields: ['total'],
+  dateFields: ['created_at'],
+}))
+```
+
+## Architecture
+
+This library follows a two-level configuration architecture:
+
+1. **Global Configuration** (`SmartQueryModule.forRoot()`) - System-level settings that apply globally
+2. **Query Options** - Entity-specific settings defined at the interceptor level
+
+### Why This Architecture?
+
+Searchable and filterable fields are **model-specific**. Different entities (User, Product, Order, etc.) require different fields. Defining these globally was poor architecture because:
+- You'd need to define all possible fields for all entities in one place
+- Adding a new entity required updating the global config
+- It's not clear which fields belong to which entity
 
 ## License
 

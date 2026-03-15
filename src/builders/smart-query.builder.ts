@@ -7,7 +7,7 @@ export interface BuildSmartQueryOptions {
   take?: number;
 }
 
-export interface SmartQueryResult {
+export interface BuiltSmartQuery {
   where: Record<string, unknown>;
   orderBy: Record<string, 'asc' | 'desc'>;
   skip: number;
@@ -18,7 +18,7 @@ export interface SmartQueryResult {
 export function buildSmartQuery(
   context: SmartQueryContext,
   ...extraConditions: Record<string, unknown>[]
-): SmartQueryResult {
+): BuiltSmartQuery {
   const { where, pagination } = context;
 
   let finalWhere: Record<string, unknown>;

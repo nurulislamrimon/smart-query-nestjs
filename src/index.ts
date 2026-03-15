@@ -5,3 +5,4 @@ export * from './interceptors';
 export * from './decorators';
 export * from './builders';
 export * from './module';
+export * from './types';

@@ -119,17 +119,29 @@ interface BuildSmartQueryOptions {
     skip?: number;
     take?: number;
 }
-interface SmartQueryResult {
+interface BuiltSmartQuery {
     where: Record<string, unknown>;
     orderBy: Record<string, 'asc' | 'desc'>;
     skip: number;
     take: number;
     page: number;
 }
-declare function buildSmartQuery(context: SmartQueryContext, ...extraConditions: Record<string, unknown>[]): SmartQueryResult;
+declare function buildSmartQuery(context: SmartQueryContext, ...extraConditions: Record<string, unknown>[]): BuiltSmartQuery;
 
 declare class SmartQueryModule {
     static forRoot(config?: SmartQueryModuleOptions & Partial<SmartQueryConfig>): DynamicModule;
 }
 
-export { type BuildSmartQueryOptions, type PaginationOptions, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, pick };
+interface SmartQueryPagination {
+    page: number;
+    limit: number;
+    skip: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+}
+type SmartQueryResult<TWhere = unknown> = {
+    where: TWhere;
+    pagination: SmartQueryPagination;
+};
+
+export { type BuildSmartQueryOptions, type BuiltSmartQuery, type PaginationOptions, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryPagination, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, pick };
