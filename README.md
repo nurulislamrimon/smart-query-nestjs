@@ -1,5 +1,9 @@
 # smart-query-nestjs
 
+[![npm version](https://img.shields.io/npm/v/smart-query-nestjs.svg)](https://www.npmjs.com/package/smart-query-nestjs)
+[![NestJS v11](https://img.shields.io/badge/NestJS-v11-blue)](https://nestjs.com)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 A high-performance, ORM-agnostic NestJS library for search, filtering, pagination, and sorting in REST APIs.
 
 ## Features
@@ -21,6 +25,11 @@ A high-performance, ORM-agnostic NestJS library for search, filtering, paginatio
 ```bash
 npm install smart-query-nestjs
 ```
+
+### Requirements
+
+- NestJS v9, v10, or v11
+- TypeScript 5.0+
 
 ## Quick Start
 
@@ -83,6 +92,11 @@ export class CustomerController {
   }
 }
 ```
+
+> **Auto-Response Transformation**: If your endpoint returns `{ data, total }`, the interceptor automatically enhances the response with pagination metadata:
+> ```json
+> { "data": [...], "total": 100, "pagination": { "page": 1, "limit": 10, "total": 100, "totalPages": 10 } }
+> ```
 
 Query options (defined per-entity):
 - `searchableFields` - Fields to search when using `searchTerm` parameter
@@ -282,6 +296,17 @@ interface QueryOptions {
 }
 ```
 
+#### SmartQueryInterceptorOptions
+
+Options for the SmartQueryInterceptor (extends QueryOptions):
+
+```typescript
+interface SmartQueryInterceptorOptions extends QueryOptions {
+  defaultLimit?: number;
+  maxLimit?: number;
+}
+```
+
 #### SmartQueryConfig
 
 Full configuration (for backward compatibility):
@@ -305,6 +330,32 @@ interface PaginationOptions {
 }
 ```
 
+#### SmartQueryContext
+
+Internal context object attached to the request:
+
+```typescript
+interface SmartQueryContext {
+  where: Record<string, unknown>;
+  orderBy: Record<string, 'asc' | 'desc'>[];
+  pagination: PaginationOptions;
+}
+```
+
+#### BuiltSmartQuery
+
+Return type of `buildSmartQuery()`:
+
+```typescript
+interface BuiltSmartQuery {
+  where: Record<string, unknown>;
+  orderBy: Record<string, 'asc' | 'desc'>[];
+  skip: number;
+  take: number;
+  page: number;
+}
+```
+
 ### Decorators
 
 #### @SmartQuery()
@@ -317,6 +368,19 @@ async findAll(@SmartQuery() query: SmartQueryResult) {
   const { where, orderBy, pagination } = query;
   // ...
 }
+```
+
+### Classes
+
+#### SmartQueryInterceptor
+
+NestJS interceptor for parsing query parameters.
+
+```typescript
+@UseInterceptors(new SmartQueryInterceptor({
+  searchableFields: ['name', 'email'],
+  filterableFields: ['name', 'email', 'status'],
+}))
 ```
 
 ### Functions
@@ -361,6 +425,24 @@ Pick specific keys from an object.
 const picked = pick(user, ['id', 'name', 'email']);
 // Returns: { id: ..., name: ..., email: ... }
 ```
+
+### Parsers
+
+#### parseFilters(parsedQuery, config)
+
+Parses filter parameters from the query string.
+
+#### buildSearchConditions(searchTerm, config)
+
+Builds search conditions for the searchTerm parameter.
+
+#### parsePagination(parsedQuery, config)
+
+Parses pagination parameters (page, limit).
+
+#### parseSort(sort, sortBy, sortOrder)
+
+Parses sorting parameters.
 
 ## Performance Optimizations
 

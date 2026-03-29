@@ -1,5 +1,11 @@
-import qs from 'qs';
-import { Injectable, Optional, Inject, createParamDecorator, Global, Module } from '@nestjs/common';
+'use strict';
+
+var qs = require('qs');
+var common = require('@nestjs/common');
+
+function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
+
+var qs__default = /*#__PURE__*/_interopDefault(qs);
 
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -23,7 +29,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
   // "default" to the CommonJS "module.exports" for node compatibility.
-  !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  __defProp(target, "default", { value: mod, enumerable: true }) ,
   mod
 ));
 var __decorateClass = (decorators, target, key, kind) => {
@@ -7564,7 +7570,7 @@ function parseQueryString(queryString) {
   if (!queryString || typeof queryString !== "string") {
     return {};
   }
-  return qs.parse(queryString, {
+  return qs__default.default.parse(queryString, {
     allowDots: true,
     arrayLimit: 0,
     comma: true
@@ -7843,7 +7849,7 @@ function mergeConfig(interceptorOptions, globalConfig) {
     maxLimit: interceptorOptions.maxLimit ?? global.maxLimit
   };
 }
-var SmartQueryInterceptor = class {
+exports.SmartQueryInterceptor = class SmartQueryInterceptor {
   constructor(interceptorOptions, globalConfig) {
     this.config = mergeConfig(interceptorOptions, globalConfig);
   }
@@ -7891,16 +7897,16 @@ var SmartQueryInterceptor = class {
     );
   }
 };
-SmartQueryInterceptor = __decorateClass([
-  Injectable(),
-  __decorateParam(0, Optional()),
-  __decorateParam(1, Optional()),
-  __decorateParam(1, Inject(SMART_QUERY_CONFIG))
-], SmartQueryInterceptor);
+exports.SmartQueryInterceptor = __decorateClass([
+  common.Injectable(),
+  __decorateParam(0, common.Optional()),
+  __decorateParam(1, common.Optional()),
+  __decorateParam(1, common.Inject(SMART_QUERY_CONFIG))
+], exports.SmartQueryInterceptor);
 function createSmartQueryInterceptor(config) {
-  return new SmartQueryInterceptor(config);
+  return new exports.SmartQueryInterceptor(config);
 }
-var SmartQuery = createParamDecorator(
+var SmartQuery = common.createParamDecorator(
   (_data, ctx) => {
     const request = ctx.switchToHttp().getRequest();
     return request.smartQuery;
@@ -7927,7 +7933,7 @@ function buildSmartQuery(context, ...extraConditions) {
     page: pagination.page
   };
 }
-var SmartQueryModule = class {
+exports.SmartQueryModule = class SmartQueryModule {
   static forRoot(config = {}) {
     const moduleConfig = {
       defaultLimit: config.defaultLimit,
@@ -7943,17 +7949,26 @@ var SmartQueryModule = class {
       useValue: moduleConfig
     };
     return {
-      module: SmartQueryModule,
+      module: exports.SmartQueryModule,
       providers: [configProvider],
       exports: [configProvider]
     };
   }
 };
-SmartQueryModule = __decorateClass([
-  Global(),
-  Module({})
-], SmartQueryModule);
+exports.SmartQueryModule = __decorateClass([
+  common.Global(),
+  common.Module({})
+], exports.SmartQueryModule);
 
-export { SMART_QUERY_CONFIG, SmartQuery, SmartQueryInterceptor, SmartQueryModule, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, parseSort, pick };
-//# sourceMappingURL=index.mjs.map
-//# sourceMappingURL=index.mjs.map
+exports.SMART_QUERY_CONFIG = SMART_QUERY_CONFIG;
+exports.SmartQuery = SmartQuery;
+exports.buildSearchConditions = buildSearchConditions;
+exports.buildSmartQuery = buildSmartQuery;
+exports.createSmartQueryInterceptor = createSmartQueryInterceptor;
+exports.parseFilters = parseFilters;
+exports.parsePagination = parsePagination;
+exports.parseQueryString = parseQueryString;
+exports.parseSort = parseSort;
+exports.pick = pick;
+//# sourceMappingURL=index.cjs.map
+//# sourceMappingURL=index.cjs.map
