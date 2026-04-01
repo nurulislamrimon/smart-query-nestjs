@@ -101,7 +101,7 @@ export class SmartQueryInterceptor implements NestInterceptor {
     const searchConditions = buildSearchConditions(searchTerm, this.config);
     const pagination = parsePagination(parsedQuery, this.config);
     const orderBy = parseSort(
-      parsedQuery.sort as string | undefined,
+      parsedQuery.sort,
       parsedQuery.sortBy,
       parsedQuery.sortOrder,
     );

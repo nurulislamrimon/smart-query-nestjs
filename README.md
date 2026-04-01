@@ -171,6 +171,12 @@ GET /customers?sort=name,-createdAt
 - `-createdAt` → descending
 - Comma-separated values for multiple sort fields
 
+Also works:
+```
+GET /customers?sort=firstName,createdAt
+```
+→ `{ firstName: 'asc', createdAt: 'asc' }`
+
 Generated Prisma query:
 
 ```ts

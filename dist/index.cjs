@@ -7761,8 +7761,19 @@ function buildStringFilter(operator, value) {
 var DEFAULT_PAGE = 1;
 var DEFAULT_LIMIT = 10;
 function parseSort(sort, sortBy, sortOrder) {
-  if (sort && typeof sort === "string") {
-    return parseSortString(sort);
+  if (sort) {
+    if (typeof sort === "string") {
+      return parseSortString(sort);
+    }
+    if (Array.isArray(sort)) {
+      return sort.map((field) => {
+        const trimmed = String(field).trim();
+        if (trimmed.startsWith("-")) {
+          return { [trimmed.slice(1)]: "desc" };
+        }
+        return { [trimmed]: "asc" };
+      });
+    }
   }
   if (sortBy && typeof sortBy === "string") {
     const sortByFields = sortBy.split(",").map((f) => f.trim());

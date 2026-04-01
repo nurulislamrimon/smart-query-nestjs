@@ -9,12 +9,23 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
 export function parseSort(
-  sort?: string,
+  sort?: unknown,
   sortBy?: unknown,
   sortOrder?: unknown,
 ): Record<string, 'asc' | 'desc'>[] {
-  if (sort && typeof sort === 'string') {
-    return parseSortString(sort);
+  if (sort) {
+    if (typeof sort === 'string') {
+      return parseSortString(sort);
+    }
+    if (Array.isArray(sort)) {
+      return sort.map((field) => {
+        const trimmed = String(field).trim();
+        if (trimmed.startsWith('-')) {
+          return { [trimmed.slice(1)]: 'desc' };
+        }
+        return { [trimmed]: 'asc' };
+      });
+    }
   }
 
   if (sortBy && typeof sortBy === 'string') {

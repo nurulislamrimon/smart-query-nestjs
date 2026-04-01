@@ -80,7 +80,7 @@ interface PaginationConfig {
     defaultLimit?: number;
     maxLimit?: number;
 }
-declare function parseSort(sort?: string, sortBy?: unknown, sortOrder?: unknown): Record<string, 'asc' | 'desc'>[];
+declare function parseSort(sort?: unknown, sortBy?: unknown, sortOrder?: unknown): Record<string, 'asc' | 'desc'>[];
 declare function parsePagination(query: Record<string, unknown>, config: PaginationConfig): PaginationOptions;
 
 declare const SMART_QUERY_CONFIG = "SMART_QUERY_CONFIG";
