@@ -72,7 +72,7 @@ export class CustomerController {
     dateFields: ['created_at'],
   }))
   async findAll(@SmartQuery() query: SmartQueryResult<Prisma.CustomerWhereInput>) {
-    const { where, orderBy, pagination } = query;
+    const { where, orderBy, pagination, page, limit } = query;
 
     const dbQuery = buildSmartQuery(query, {
       shop_id: user.tenant_id,
@@ -235,10 +235,12 @@ export class CustomerController {
       Prisma.CustomerOrderByWithRelationInput
     >
   ) {
-    const { where, orderBy, pagination } = query;
+    const { where, orderBy, pagination, page, limit } = query;
     // where: Prisma.CustomerWhereInput
     // orderBy: Prisma.CustomerOrderByWithRelationInput[]
     // pagination: { page, limit, skip }
+    // page: number
+    // limit: number
 
     return this.prisma.customer.findMany({
       where,
@@ -270,6 +272,8 @@ type SmartQueryResult<
   where: TWhere;
   orderBy: TOrderBy[];
   pagination: SmartQueryPagination;
+  page: number;
+  limit: number;
 };
 ```
 
@@ -345,6 +349,8 @@ interface SmartQueryContext {
   where: Record<string, unknown>;
   orderBy: Record<string, 'asc' | 'desc'>[];
   pagination: PaginationOptions;
+  page: number;
+  limit: number;
 }
 ```
 
@@ -371,7 +377,7 @@ Extracts the SmartQueryResult from the request.
 ```typescript
 @Get()
 async findAll(@SmartQuery() query: SmartQueryResult) {
-  const { where, orderBy, pagination } = query;
+  const { where, orderBy, pagination, page, limit } = query;
   // ...
 }
 ```

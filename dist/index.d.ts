@@ -46,6 +46,8 @@ interface SmartQueryContext {
     where: Record<string, unknown>;
     orderBy: Record<string, 'asc' | 'desc'>[];
     pagination: PaginationOptions;
+    page: number;
+    limit: number;
 }
 
 declare function parseQueryString(queryString: string): Record<string, unknown>;
@@ -143,6 +145,8 @@ type SmartQueryResult<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'
     where: TWhere;
     orderBy: TOrderBy[];
     pagination: SmartQueryPagination;
+    page: number;
+    limit: number;
 };
 
 export { type BuildSmartQueryOptions, type BuiltSmartQuery, type PaginationOptions, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryPagination, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, parseSort, pick };

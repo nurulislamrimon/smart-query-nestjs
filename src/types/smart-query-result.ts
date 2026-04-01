@@ -11,4 +11,6 @@ export type SmartQueryResult<
   where: TWhere;
   orderBy: TOrderBy[];
   pagination: SmartQueryPagination;
+  page: number;
+  limit: number;
 };

@@ -7890,7 +7890,9 @@ exports.SmartQueryInterceptor = class SmartQueryInterceptor {
     const smartQueryContext = {
       where,
       orderBy,
-      pagination
+      pagination,
+      page: pagination.page,
+      limit: pagination.limit
     };
     request.smartQuery = smartQueryContext;
     return next.handle().pipe(

@@ -120,6 +120,8 @@ export class SmartQueryInterceptor implements NestInterceptor {
       where,
       orderBy,
       pagination,
+      page: pagination.page,
+      limit: pagination.limit,
     };
 
     request.smartQuery = smartQueryContext;
