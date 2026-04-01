@@ -186,12 +186,18 @@ orderBy: [
 
 #### Legacy Syntax (Backward Compatible)
 
+**Single field:**
 ```
 GET /customers?sortBy=created_at&sortOrder=desc
 ```
 
-- `sortBy`: Field to sort by
-- `sortOrder`: `asc` or `desc` (default: asc)
+**Multi-field:**
+```
+GET /customers?sortBy=createdAt,firstName&sortOrder=desc,asc
+```
+
+- `sortBy`: Comma-separated fields to sort by
+- `sortOrder`: Comma-separated order values (`asc` or `desc`), defaults to `asc`
 
 ## Combined Example
 

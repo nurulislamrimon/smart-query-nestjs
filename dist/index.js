@@ -7756,13 +7756,27 @@ var DEFAULT_PAGE = 1;
 var DEFAULT_LIMIT = 10;
 function parseSort(sort, sortBy, sortOrder) {
   if (sort && typeof sort === "string") {
-    return parseSort(sort);
+    return parseSortString(sort);
   }
   if (sortBy && typeof sortBy === "string") {
-    const order = sortOrder === "desc" || typeof sortOrder === "string" && sortOrder.toLowerCase() === "desc" ? "desc" : "asc";
-    return [{ [sortBy]: order }];
+    const sortByFields = sortBy.split(",").map((f) => f.trim());
+    const sortOrderStr = typeof sortOrder === "string" ? sortOrder : "";
+    const sortOrders = sortOrderStr ? sortOrderStr.split(",").map((o) => o.trim().toLowerCase()) : [];
+    return sortByFields.map((field, index) => {
+      const order = sortOrders[index] === "desc" ? "desc" : "asc";
+      return { [field]: order };
+    });
   }
   return [];
+}
+function parseSortString(sort) {
+  return sort.split(",").map((field) => {
+    const trimmed = field.trim();
+    if (trimmed.startsWith("-")) {
+      return { [trimmed.slice(1)]: "desc" };
+    }
+    return { [trimmed]: "asc" };
+  });
 }
 function parsePagination(query, config) {
   const pageParam = query.page;

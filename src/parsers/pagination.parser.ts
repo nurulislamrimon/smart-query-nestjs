@@ -14,19 +14,34 @@ export function parseSort(
   sortOrder?: unknown,
 ): Record<string, 'asc' | 'desc'>[] {
   if (sort && typeof sort === 'string') {
-    return parseSort(sort);
+    return parseSortString(sort);
   }
 
   if (sortBy && typeof sortBy === 'string') {
-    const order: 'asc' | 'desc' =
-      sortOrder === 'desc' ||
-      (typeof sortOrder === 'string' && sortOrder.toLowerCase() === 'desc')
-        ? 'desc'
-        : 'asc';
-    return [{ [sortBy]: order }];
+    const sortByFields = sortBy.split(',').map((f) => f.trim());
+    const sortOrderStr = typeof sortOrder === 'string' ? sortOrder : '';
+    const sortOrders = sortOrderStr
+      ? sortOrderStr.split(',').map((o) => o.trim().toLowerCase())
+      : [];
+
+    return sortByFields.map((field, index) => {
+      const order: 'asc' | 'desc' =
+        sortOrders[index] === 'desc' ? 'desc' : 'asc';
+      return { [field]: order };
+    });
   }
 
   return [];
+}
+
+function parseSortString(sort: string): Record<string, 'asc' | 'desc'>[] {
+  return sort.split(',').map((field) => {
+    const trimmed = field.trim();
+    if (trimmed.startsWith('-')) {
+      return { [trimmed.slice(1)]: 'desc' };
+    }
+    return { [trimmed]: 'asc' };
+  });
 }
 
 export function parsePagination(
