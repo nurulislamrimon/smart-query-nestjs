@@ -6,7 +6,5 @@ export function parseQueryString(queryString: string): Record<string, unknown> {
   }
   return qs.parse(queryString, {
     allowDots: true,
-    arrayLimit: 0,
-    comma: true,
   }) as Record<string, unknown>;
 }

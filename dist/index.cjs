@@ -7571,9 +7571,7 @@ function parseQueryString(queryString) {
     return {};
   }
   return qs__default.default.parse(queryString, {
-    allowDots: true,
-    arrayLimit: 0,
-    comma: true
+    allowDots: true
   });
 }
 
@@ -7615,7 +7613,7 @@ function parseFilters(query, options) {
   const numberFieldsSet = new Set(options.numberFields ?? []);
   const booleanFieldsSet = new Set(options.booleanFields ?? []);
   const dateFieldsSet = new Set(options.dateFields ?? []);
-  const paginationKeys = /* @__PURE__ */ new Set(["page", "limit", "sortBy", "sortOrder", "searchTerm"]);
+  const paginationKeys = /* @__PURE__ */ new Set(["page", "limit", "sort", "sortBy", "sortOrder", "searchTerm"]);
   for (const [key, value] of Object.entries(query)) {
     if (paginationKeys.has(key) || key.startsWith("searchTerm")) {
       continue;

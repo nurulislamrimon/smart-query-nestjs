@@ -18,7 +18,7 @@ export function parseFilters(
   const booleanFieldsSet = new Set(options.booleanFields ?? []);
   const dateFieldsSet = new Set(options.dateFields ?? []);
 
-  const paginationKeys = new Set(['page', 'limit', 'sortBy', 'sortOrder', 'searchTerm']);
+  const paginationKeys = new Set(['page', 'limit', 'sort', 'sortBy', 'sortOrder', 'searchTerm']);
 
   for (const [key, value] of Object.entries(query)) {
     if (paginationKeys.has(key) || key.startsWith('searchTerm')) {

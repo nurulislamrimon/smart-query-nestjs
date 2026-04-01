@@ -175,7 +175,7 @@ Also works:
 ```
 GET /customers?sort=firstName,createdAt
 ```
-→ `{ firstName: 'asc', createdAt: 'asc' }`
+→ `[{ firstName: 'asc' }, { createdAt: 'asc' }]`
 
 Generated Prisma query:
 
