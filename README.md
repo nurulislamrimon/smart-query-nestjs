@@ -6,6 +6,33 @@
 
 A high-performance, ORM-agnostic NestJS library for search, filtering, pagination, and sorting in REST APIs.
 
+## Clean Code
+
+```
+  @Get()
+  @UseInterceptors(new SmartQueryInterceptor(userQueryConfig))
+  async findAll(@SmartQuery() query: SmartQueryResult<Prisma.UserWhereInput>) {
+    const { where, orderBy, skip, take, page, limit } = query;
+
+    const { data, total } = await this.userService.findAll({
+      where: where,
+      orderBy: orderBy,
+      skip: skip,
+      take: take,
+      select: userSelectFields,
+    });
+
+    return {
+      meta: {
+        total,
+        limit,
+        page,
+      },
+      data,
+    };
+  }
+```
+
 ## Features
 
 - **Global Search** - Search across multiple fields with a single query parameter
@@ -36,8 +63,8 @@ npm install smart-query-nestjs
 ### 1. Configure the Module (Optional - Global Settings)
 
 ```typescript
-import { Module } from '@nestjs/common';
-import { SmartQueryModule } from 'smart-query-nestjs';
+import { Module } from "@nestjs/common";
+import { SmartQueryModule } from "smart-query-nestjs";
 
 @Module({
   imports: [
@@ -51,27 +78,44 @@ export class AppModule {}
 ```
 
 Global configuration options:
+
 - `defaultLimit` - Default number of items per page (default: 10)
 - `maxLimit` - Maximum allowed items per page (default: 100)
 
 ### 2. Use in Controller
 
 ```typescript
-import { Controller, Get, UseInterceptors } from '@nestjs/common';
-import { SmartQueryInterceptor, SmartQuery, buildSmartQuery, SmartQueryResult } from 'smart-query-nestjs';
-import { Prisma } from '@prisma/client';
+import { Controller, Get, UseInterceptors } from "@nestjs/common";
+import {
+  SmartQueryInterceptor,
+  SmartQuery,
+  buildSmartQuery,
+  SmartQueryResult,
+} from "smart-query-nestjs";
+import { Prisma } from "@prisma/client";
 
-@Controller('customers')
+@Controller("customers")
 export class CustomerController {
   @Get()
-  @UseInterceptors(new SmartQueryInterceptor({
-    searchableFields: ['full_name', 'email'],
-    filterableFields: ['full_name', 'email', 'is_active', 'status', 'shop_id', 'age'],
-    numberFields: ['age'],
-    booleanFields: ['is_active'],
-    dateFields: ['created_at'],
-  }))
-  async findAll(@SmartQuery() query: SmartQueryResult<Prisma.CustomerWhereInput>) {
+  @UseInterceptors(
+    new SmartQueryInterceptor({
+      searchableFields: ["full_name", "email"],
+      filterableFields: [
+        "full_name",
+        "email",
+        "is_active",
+        "status",
+        "shop_id",
+        "age",
+      ],
+      numberFields: ["age"],
+      booleanFields: ["is_active"],
+      dateFields: ["created_at"],
+    }),
+  )
+  async findAll(
+    @SmartQuery() query: SmartQueryResult<Prisma.CustomerWhereInput>,
+  ) {
     const { where, orderBy, skip, take, page, limit } = query;
 
     const [data, total] = await Promise.all([
@@ -90,11 +134,13 @@ export class CustomerController {
 ```
 
 > **Auto-Response Transformation**: If your endpoint returns `{ data, total }`, the interceptor automatically enhances the response with pagination metadata:
+>
 > ```json
 > { "data": [...], "total": 100, "pagination": { "limit": 10, "total": 100, "totalPages": 10 } }
 > ```
 
 Query options (defined per-entity):
+
 - `searchableFields` - Fields to search when using `searchTerm` parameter
 - `filterableFields` - Fields that can be filtered
 - `numberFields` - Fields that should be parsed as numbers
@@ -172,28 +218,29 @@ GET /customers?sort=name,-createdAt
 - Comma-separated values for multiple sort fields
 
 Also works:
+
 ```
 GET /customers?sort=firstName,createdAt
 ```
+
 → `[{ firstName: 'asc' }, { createdAt: 'asc' }]`
 
 Generated Prisma query:
 
 ```ts
-orderBy: [
-  { name: 'asc' },
-  { createdAt: 'desc' }
-]
+orderBy: [{ name: "asc" }, { createdAt: "desc" }];
 ```
 
 #### Legacy Syntax (Backward Compatible)
 
 **Single field:**
+
 ```
 GET /customers?sortBy=created_at&sortOrder=desc
 ```
 
 **Multi-field:**
+
 ```
 GET /customers?sortBy=createdAt,firstName&sortOrder=desc,asc
 ```
@@ -208,6 +255,7 @@ GET /customers?searchTerm=john&status[]=active&age[gte]=18&page=1&limit=20&sort=
 ```
 
 This query will:
+
 - Search for "john" in all searchable fields
 - Filter by status "active"
 - Filter by age >= 18
@@ -221,21 +269,28 @@ This query will:
 The package exports `SmartQueryResult<TWhere, TOrderBy>` for full TypeScript support:
 
 ```typescript
-import { SmartQuery, SmartQueryResult, SmartQueryInterceptor } from 'smart-query-nestjs';
-import { Prisma } from '@prisma/client';
+import {
+  SmartQuery,
+  SmartQueryResult,
+  SmartQueryInterceptor,
+} from "smart-query-nestjs";
+import { Prisma } from "@prisma/client";
 
-@Controller('customers')
+@Controller("customers")
 export class CustomerController {
   @Get()
-  @UseInterceptors(new SmartQueryInterceptor({
-    searchableFields: ['full_name', 'email'],
-    filterableFields: ['full_name', 'email', 'is_active', 'status'],
-  }))
+  @UseInterceptors(
+    new SmartQueryInterceptor({
+      searchableFields: ["full_name", "email"],
+      filterableFields: ["full_name", "email", "is_active", "status"],
+    }),
+  )
   async findAll(
-    @SmartQuery() query: SmartQueryResult<
+    @SmartQuery()
+    query: SmartQueryResult<
       Prisma.CustomerWhereInput,
       Prisma.CustomerOrderByWithRelationInput
-    >
+    >,
   ) {
     const { where, orderBy, skip, take, page, limit } = query;
     // where: Prisma.CustomerWhereInput
@@ -269,7 +324,7 @@ interface SmartQueryPagination {
 ```typescript
 type SmartQueryResult<
   TWhere = unknown,
-  TOrderBy = Record<string, 'asc' | 'desc'>
+  TOrderBy = Record<string, "asc" | "desc">,
 > = {
   where: TWhere;
   orderBy: TOrderBy[];
@@ -339,7 +394,7 @@ interface PaginationOptions {
   limit: number;
   skip: number;
   sortBy: string;
-  sortOrder: 'asc' | 'desc';
+  sortOrder: "asc" | "desc";
 }
 ```
 
@@ -350,7 +405,7 @@ Internal context object attached to the request:
 ```typescript
 interface SmartQueryContext {
   where: Record<string, unknown>;
-  orderBy: Record<string, 'asc' | 'desc'>[];
+  orderBy: Record<string, "asc" | "desc">[];
   skip: number;
   take: number;
   page: number;
@@ -365,7 +420,7 @@ Return type of `buildSmartQuery()`:
 ```typescript
 interface BuiltSmartQuery {
   where: Record<string, unknown>;
-  orderBy: Record<string, 'asc' | 'desc'>[];
+  orderBy: Record<string, "asc" | "desc">[];
   skip: number;
   take: number;
 }
@@ -415,9 +470,9 @@ Factory function to create a SmartQueryInterceptor with specific options.
 
 ```typescript
 const interceptor = createSmartQueryInterceptor({
-  searchableFields: ['title', 'description'],
-  filterableFields: ['category', 'price', 'status'],
-  numberFields: ['price'],
+  searchableFields: ["title", "description"],
+  filterableFields: ["category", "price", "status"],
+  numberFields: ["price"],
 });
 ```
 
@@ -428,7 +483,7 @@ const interceptor = createSmartQueryInterceptor({
 Parses a query string into an object.
 
 ```typescript
-const parsed = parseQueryString('page=1&limit=10&searchTerm=foo');
+const parsed = parseQueryString("page=1&limit=10&searchTerm=foo");
 // Returns: { page: 1, limit: 10, searchTerm: 'foo' }
 ```
 
@@ -437,7 +492,7 @@ const parsed = parseQueryString('page=1&limit=10&searchTerm=foo');
 Pick specific keys from an object.
 
 ```typescript
-const picked = pick(user, ['id', 'name', 'email']);
+const picked = pick(user, ["id", "name", "email"]);
 // Returns: { id: ..., name: ..., email: ... }
 ```
 
@@ -479,7 +534,7 @@ Each controller/entity can have its own configuration:
   filterableFields: ['full_name', 'email', 'status', 'shop_id'],
 }))
 
-// For Products  
+// For Products
 @UseInterceptors(new SmartQueryInterceptor({
   searchableFields: ['name', 'description', 'sku'],
   filterableFields: ['name', 'category', 'price', 'is_active'],
@@ -505,6 +560,7 @@ This library follows a two-level configuration architecture:
 ### Why This Architecture?
 
 Searchable and filterable fields are **model-specific**. Different entities (User, Product, Order, etc.) require different fields. Defining these globally was poor architecture because:
+
 - You'd need to define all possible fields for all entities in one place
 - Adding a new entity required updating the global config
 - It's not clear which fields belong to which entity
