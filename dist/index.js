@@ -7895,7 +7895,6 @@ var SmartQueryInterceptor = class {
           return {
             ...data,
             pagination: {
-              page: pagination.page,
               limit: pagination.limit,
               total: data.total,
               totalPages: Math.ceil(data.total / pagination.limit)

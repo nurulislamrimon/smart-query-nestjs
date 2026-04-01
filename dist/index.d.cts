@@ -137,7 +137,6 @@ declare class SmartQueryModule {
 }
 
 interface SmartQueryPagination {
-    page: number;
     limit: number;
     skip: number;
 }

@@ -95,7 +95,7 @@ export class CustomerController {
 
 > **Auto-Response Transformation**: If your endpoint returns `{ data, total }`, the interceptor automatically enhances the response with pagination metadata:
 > ```json
-> { "data": [...], "total": 100, "pagination": { "page": 1, "limit": 10, "total": 100, "totalPages": 10 } }
+> { "data": [...], "total": 100, "pagination": { "limit": 10, "total": 100, "totalPages": 10 } }
 > ```
 
 Query options (defined per-entity):
@@ -238,7 +238,7 @@ export class CustomerController {
     const { where, orderBy, pagination, page, limit } = query;
     // where: Prisma.CustomerWhereInput
     // orderBy: Prisma.CustomerOrderByWithRelationInput[]
-    // pagination: { page, limit, skip }
+    // pagination: { limit, skip }
     // page: number
     // limit: number
 
@@ -256,7 +256,6 @@ export class CustomerController {
 
 ```typescript
 interface SmartQueryPagination {
-  page: number;
   limit: number;
   skip: number;
 }

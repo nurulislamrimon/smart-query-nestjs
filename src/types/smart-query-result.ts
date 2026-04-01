@@ -1,5 +1,4 @@
 export interface SmartQueryPagination {
-  page: number;
   limit: number;
   skip: number;
 }
