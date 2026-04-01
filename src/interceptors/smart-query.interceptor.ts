@@ -119,7 +119,8 @@ export class SmartQueryInterceptor implements NestInterceptor {
     const smartQueryContext: SmartQueryContext = {
       where,
       orderBy,
-      pagination,
+      skip: pagination.skip,
+      take: pagination.limit,
       page: pagination.page,
       limit: pagination.limit,
     };

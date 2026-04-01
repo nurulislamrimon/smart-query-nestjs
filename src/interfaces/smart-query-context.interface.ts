@@ -1,9 +1,3 @@
-import { PaginationOptions } from './pagination-options.interface';
+import { SmartQueryMeta, PrismaQuery } from '../types';
 
-export interface SmartQueryContext {
-  where: Record<string, unknown>;
-  orderBy: Record<string, 'asc' | 'desc'>[];
-  pagination: PaginationOptions;
-  page: number;
-  limit: number;
-}
+export type SmartQueryContext = PrismaQuery & SmartQueryMeta;

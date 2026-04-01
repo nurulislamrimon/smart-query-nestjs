@@ -7884,7 +7884,8 @@ var SmartQueryInterceptor = class {
     const smartQueryContext = {
       where,
       orderBy,
-      pagination,
+      skip: pagination.skip,
+      take: pagination.limit,
       page: pagination.page,
       limit: pagination.limit
     };
@@ -7924,22 +7925,19 @@ var SmartQuery = createParamDecorator(
 
 // src/builders/smart-query.builder.ts
 function buildSmartQuery(context, ...extraConditions) {
-  const { where, orderBy, pagination } = context;
-  let finalWhere;
-  if (extraConditions.length === 0) {
-    finalWhere = where;
-  } else if (extraConditions.length === 1) {
+  const { where, orderBy, skip, take } = context;
+  let finalWhere = where;
+  if (extraConditions.length === 1) {
     finalWhere = { AND: [where, extraConditions[0]] };
-  } else {
+  } else if (extraConditions.length > 1) {
     finalWhere = { AND: [where, ...extraConditions] };
   }
-  const finalOrderBy = orderBy.length > 0 ? orderBy : [{ [pagination.sortBy]: pagination.sortOrder }];
+  const finalOrderBy = orderBy.length > 0 ? orderBy : [];
   return {
     where: finalWhere,
     orderBy: finalOrderBy,
-    skip: pagination.skip,
-    take: pagination.limit,
-    page: pagination.page
+    skip,
+    take
   };
 }
 var SmartQueryModule = class {

@@ -72,20 +72,16 @@ export class CustomerController {
     dateFields: ['created_at'],
   }))
   async findAll(@SmartQuery() query: SmartQueryResult<Prisma.CustomerWhereInput>) {
-    const { where, orderBy, pagination, page, limit } = query;
-
-    const dbQuery = buildSmartQuery(query, {
-      shop_id: user.tenant_id,
-    });
+    const { where, orderBy, skip, take, page, limit } = query;
 
     const [data, total] = await Promise.all([
       this.prisma.customer.findMany({
-        where: dbQuery.where,
-        orderBy: dbQuery.orderBy,
-        skip: dbQuery.skip,
-        take: dbQuery.take,
+        where,
+        orderBy,
+        skip,
+        take,
       }),
-      this.prisma.customer.count({ where: dbQuery.where }),
+      this.prisma.customer.count({ where }),
     ]);
 
     return { data, total };
@@ -235,18 +231,19 @@ export class CustomerController {
       Prisma.CustomerOrderByWithRelationInput
     >
   ) {
-    const { where, orderBy, pagination, page, limit } = query;
+    const { where, orderBy, skip, take, page, limit } = query;
     // where: Prisma.CustomerWhereInput
     // orderBy: Prisma.CustomerOrderByWithRelationInput[]
-    // pagination: { limit, skip }
-    // page: number
-    // limit: number
+    // skip: number
+    // take: number
+    // page: number (meta)
+    // limit: number (meta)
 
     return this.prisma.customer.findMany({
       where,
       orderBy,
-      skip: pagination.skip,
-      take: pagination.limit,
+      skip,
+      take,
     });
   }
 }
@@ -256,8 +253,8 @@ export class CustomerController {
 
 ```typescript
 interface SmartQueryPagination {
-  limit: number;
   skip: number;
+  take: number;
 }
 ```
 
@@ -270,7 +267,8 @@ type SmartQueryResult<
 > = {
   where: TWhere;
   orderBy: TOrderBy[];
-  pagination: SmartQueryPagination;
+  skip: number;
+  take: number;
   page: number;
   limit: number;
 };
@@ -347,7 +345,8 @@ Internal context object attached to the request:
 interface SmartQueryContext {
   where: Record<string, unknown>;
   orderBy: Record<string, 'asc' | 'desc'>[];
-  pagination: PaginationOptions;
+  skip: number;
+  take: number;
   page: number;
   limit: number;
 }
@@ -363,7 +362,6 @@ interface BuiltSmartQuery {
   orderBy: Record<string, 'asc' | 'desc'>[];
   skip: number;
   take: number;
-  page: number;
 }
 ```
 
@@ -376,7 +374,7 @@ Extracts the SmartQueryResult from the request.
 ```typescript
 @Get()
 async findAll(@SmartQuery() query: SmartQueryResult) {
-  const { where, orderBy, pagination, page, limit } = query;
+  const { where, orderBy, skip, take, page, limit } = query;
   // ...
 }
 ```

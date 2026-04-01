@@ -34,20 +34,32 @@ interface SmartQueryConfig extends QueryOptions {
     maxLimit?: number;
 }
 
+interface PrismaQuery<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'>> {
+    where: TWhere;
+    orderBy: TOrderBy[];
+    skip: number;
+    take: number;
+}
+interface SmartQueryMeta {
+    page: number;
+    limit: number;
+    total?: number;
+    totalPages?: number;
+}
+interface SmartQueryPagination {
+    skip: number;
+    take: number;
+}
+type SmartQueryResult<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'>> = PrismaQuery<TWhere, TOrderBy> & SmartQueryMeta;
+
+type SmartQueryContext = PrismaQuery & SmartQueryMeta;
+
 interface PaginationOptions {
     page: number;
     limit: number;
     skip: number;
     sortBy: string;
     sortOrder: 'asc' | 'desc';
-}
-
-interface SmartQueryContext {
-    where: Record<string, unknown>;
-    orderBy: Record<string, 'asc' | 'desc'>[];
-    pagination: PaginationOptions;
-    page: number;
-    limit: number;
 }
 
 declare function parseQueryString(queryString: string): Record<string, unknown>;
@@ -123,29 +135,11 @@ interface BuildSmartQueryOptions {
     skip?: number;
     take?: number;
 }
-interface BuiltSmartQuery {
-    where: Record<string, unknown>;
-    orderBy: Record<string, 'asc' | 'desc'>[];
-    skip: number;
-    take: number;
-    page: number;
-}
+type BuiltSmartQuery = Pick<SmartQueryContext, 'where' | 'orderBy' | 'skip' | 'take'>;
 declare function buildSmartQuery(context: SmartQueryContext, ...extraConditions: Record<string, unknown>[]): BuiltSmartQuery;
 
 declare class SmartQueryModule {
     static forRoot(config?: SmartQueryModuleOptions & Partial<SmartQueryConfig>): DynamicModule;
 }
 
-interface SmartQueryPagination {
-    limit: number;
-    skip: number;
-}
-type SmartQueryResult<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'>> = {
-    where: TWhere;
-    orderBy: TOrderBy[];
-    pagination: SmartQueryPagination;
-    page: number;
-    limit: number;
-};
-
-export { type BuildSmartQueryOptions, type BuiltSmartQuery, type PaginationOptions, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryPagination, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, parseSort, pick };
+export { type BuildSmartQueryOptions, type BuiltSmartQuery, type PaginationOptions, type PrismaQuery, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, type SmartQueryMeta, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryPagination, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, parseSort, pick };

@@ -7,40 +7,31 @@ export interface BuildSmartQueryOptions {
   take?: number;
 }
 
-export interface BuiltSmartQuery {
-  where: Record<string, unknown>;
-  orderBy: Record<string, 'asc' | 'desc'>[];
-  skip: number;
-  take: number;
-  page: number;
-}
+export type BuiltSmartQuery = Pick<
+  SmartQueryContext,
+  'where' | 'orderBy' | 'skip' | 'take'
+>;
 
 export function buildSmartQuery(
   context: SmartQueryContext,
   ...extraConditions: Record<string, unknown>[]
 ): BuiltSmartQuery {
-  const { where, orderBy, pagination } = context;
+  const { where, orderBy, skip, take } = context;
 
-  let finalWhere: Record<string, unknown>;
+  let finalWhere: Record<string, unknown> = where as Record<string, unknown>;
 
-  if (extraConditions.length === 0) {
-    finalWhere = where;
-  } else if (extraConditions.length === 1) {
+  if (extraConditions.length === 1) {
     finalWhere = { AND: [where, extraConditions[0]] };
-  } else {
+  } else if (extraConditions.length > 1) {
     finalWhere = { AND: [where, ...extraConditions] };
   }
 
-  const finalOrderBy =
-    orderBy.length > 0
-      ? orderBy
-      : [{ [pagination.sortBy]: pagination.sortOrder }];
+  const finalOrderBy = orderBy.length > 0 ? orderBy : [];
 
   return {
     where: finalWhere,
     orderBy: finalOrderBy,
-    skip: pagination.skip,
-    take: pagination.limit,
-    page: pagination.page,
+    skip,
+    take,
   };
 }
