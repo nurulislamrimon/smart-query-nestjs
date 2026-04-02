@@ -52,6 +52,17 @@ interface SmartQueryPagination {
 }
 type SmartQueryResult<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'>> = PrismaQuery<TWhere, TOrderBy> & SmartQueryMeta;
 
+type KeysOfType<T, U> = {
+    [K in keyof T]: T[K] extends U | null | undefined ? K : never;
+}[keyof T];
+type QueryConfig<T> = {
+    searchableFields: KeysOfType<T, string>[];
+    filterableFields: (keyof T)[];
+    numberFields: KeysOfType<T, number>[];
+    booleanFields: KeysOfType<T, boolean>[];
+    dateFields: KeysOfType<T, Date>[];
+};
+
 type SmartQueryContext = PrismaQuery & SmartQueryMeta;
 
 interface PaginationOptions {
@@ -142,4 +153,4 @@ declare class SmartQueryModule {
     static forRoot(config?: SmartQueryModuleOptions & Partial<SmartQueryConfig>): DynamicModule;
 }
 
-export { type BuildSmartQueryOptions, type BuiltSmartQuery, type PaginationOptions, type PrismaQuery, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, type SmartQueryMeta, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryPagination, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, parseSort, pick };
+export { type BuildSmartQueryOptions, type BuiltSmartQuery, type PaginationOptions, type PrismaQuery, type QueryConfig, type QueryOptions, SMART_QUERY_CONFIG, SmartQuery, type SmartQueryConfig, type SmartQueryContext, SmartQueryInterceptor, type SmartQueryInterceptorOptions, type SmartQueryMeta, SmartQueryModule, type SmartQueryModuleOptions, type SmartQueryPagination, type SmartQueryResult, buildSearchConditions, buildSmartQuery, createSmartQueryInterceptor, parseFilters, parsePagination, parseQueryString, parseSort, pick };

@@ -335,6 +335,35 @@ type SmartQueryResult<
 };
 ```
 
+### QueryConfig Type
+
+The package exports a type-safe `QueryConfig<T>` utility for generating query configuration from Prisma models:
+
+```typescript
+import { QueryConfig } from "smart-query-nestjs";
+import { Prisma } from "@prisma/client";
+
+type UserQueryConfig = QueryConfig<Prisma.UserWhereInput>;
+
+const config: UserQueryConfig = {
+  searchableFields: ["email", "name"],    // KeysOfType<T, string>
+  filterableFields: ["id", "email", "role", "createdAt"],
+  numberFields: ["age", "score"],         // KeysOfType<T, number>
+  booleanFields: ["isActive"],             // KeysOfType<T, boolean>
+  dateFields: ["createdAt", "updatedAt"],  // KeysOfType<T, Date>
+};
+```
+
+#### KeysOfType Utility
+
+```typescript
+type KeysOfType<T, U> = {
+  [K in keyof T]: T[K] extends U | null | undefined ? K : never;
+}[keyof T];
+```
+
+This utility extracts keys from a type where the value type extends `U`, including nullable fields (`null | undefined`). Works with Prisma models where fields can be optional or nullable.
+
 ## API Reference
 
 ### Interfaces

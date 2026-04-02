@@ -1,6 +1,6 @@
 {
   "name": "smart-query-nestjs",
-  "version": "3.0.3",
+  "version": "3.1.0",
   "type": "module",
   "description": "High-performance search, filtering, pagination, and sorting for NestJS REST APIs",
   "main": "./dist/index.cjs",
