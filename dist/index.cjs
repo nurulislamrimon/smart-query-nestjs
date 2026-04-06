@@ -7607,6 +7607,48 @@ function buildSearchConditions(searchTerm, options) {
 }
 
 // src/parsers/filter.parser.ts
+var ALLOWED_OPERATORS = [
+  "equals",
+  "lt",
+  "lte",
+  "gt",
+  "gte",
+  "in",
+  "notIn",
+  "contains",
+  "startsWith",
+  "endsWith",
+  "not"
+];
+function isOperatorObject(value) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const keys = Object.keys(value);
+  return keys.length > 0 && keys.every((key) => ALLOWED_OPERATORS.includes(key));
+}
+function parseValue(value, field, options) {
+  if (options.booleanFields?.includes(field)) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+      const lower = value.toLowerCase();
+      if (lower === "true" || lower === "1" || lower === "yes") return true;
+      if (lower === "false" || lower === "0" || lower === "no") return false;
+    }
+    return value;
+  }
+  if (options.numberFields?.includes(field)) {
+    const num = Number(value);
+    return Number.isNaN(num) ? value : num;
+  }
+  if (options.dateFields?.includes(field)) {
+    if (value instanceof Date) return value;
+    const date = new Date(String(value));
+    if (!Number.isNaN(date.getTime())) return date;
+    return value;
+  }
+  return value;
+}
 function parseFilters(query, options) {
   const result = {};
   const filterableFieldsSet = new Set(options.filterableFields ?? []);
@@ -7622,6 +7664,14 @@ function parseFilters(query, options) {
       continue;
     }
     if (value === void 0 || value === null || value === "") {
+      continue;
+    }
+    if (isOperatorObject(value)) {
+      const parsedOperators = {};
+      for (const op of Object.keys(value)) {
+        parsedOperators[op] = parseValue(value[op], key, options);
+      }
+      result[key] = parsedOperators;
       continue;
     }
     const parsedFilter = parseFieldFilter(key, value);
