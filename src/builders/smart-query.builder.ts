@@ -1,37 +1,51 @@
-import { SmartQueryContext } from '../interfaces';
+import { SmartQueryResult } from '../types';
 
-export interface BuildSmartQueryOptions {
-  where?: Record<string, unknown>;
+export interface BuildSmartQueryOptions<TWhere = any> {
+  where?: TWhere;
   orderBy?: Record<string, 'asc' | 'desc'>[];
   skip?: number;
   take?: number;
+  page?: number;
+  limit?: number;
 }
 
-export type BuiltSmartQuery = Pick<
-  SmartQueryContext,
-  'where' | 'orderBy' | 'skip' | 'take'
->;
+export interface BuiltSmartQuery<TWhere = any> {
+  where: TWhere;
+  orderBy?: Record<string, 'asc' | 'desc'>[];
+  skip: number;
+  take: number;
+  page: number;
+  limit: number;
+}
 
-export function buildSmartQuery(
-  context: SmartQueryContext,
-  ...extraConditions: Record<string, unknown>[]
-): BuiltSmartQuery {
-  const { where, orderBy, skip, take } = context;
+export function buildSmartQuery<TWhere = any>(
+  query: SmartQueryResult<TWhere>,
+  ...extraConditions: Partial<TWhere>[]
+): BuiltSmartQuery<TWhere> {
+  const { where, orderBy, skip, take, page, limit } = query;
 
-  let finalWhere: Record<string, unknown> = where as Record<string, unknown>;
+  let finalWhere: TWhere;
 
-  if (extraConditions.length === 1) {
-    finalWhere = { AND: [where, extraConditions[0]] };
-  } else if (extraConditions.length > 1) {
-    finalWhere = { AND: [where, ...extraConditions] };
+  if (extraConditions.length === 0) {
+    finalWhere = where as TWhere;
+  } else if (extraConditions.length === 1) {
+    finalWhere = {
+      AND: [where, extraConditions[0]],
+    } as TWhere;
+  } else {
+    finalWhere = {
+      AND: [where, ...extraConditions],
+    } as TWhere;
   }
 
-  const finalOrderBy = orderBy.length > 0 ? orderBy : [];
+  const finalOrderBy = orderBy?.length ? orderBy : [];
 
   return {
     where: finalWhere,
     orderBy: finalOrderBy,
-    skip,
-    take,
+    skip: skip ?? 0,
+    take: take ?? 10,
+    page: page ?? 1,
+    limit: limit ?? 10,
   };
 }

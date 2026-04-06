@@ -7933,20 +7933,28 @@ var SmartQuery = createParamDecorator(
 );
 
 // src/builders/smart-query.builder.ts
-function buildSmartQuery(context, ...extraConditions) {
-  const { where, orderBy, skip, take } = context;
-  let finalWhere = where;
-  if (extraConditions.length === 1) {
-    finalWhere = { AND: [where, extraConditions[0]] };
-  } else if (extraConditions.length > 1) {
-    finalWhere = { AND: [where, ...extraConditions] };
+function buildSmartQuery(query, ...extraConditions) {
+  const { where, orderBy, skip, take, page, limit } = query;
+  let finalWhere;
+  if (extraConditions.length === 0) {
+    finalWhere = where;
+  } else if (extraConditions.length === 1) {
+    finalWhere = {
+      AND: [where, extraConditions[0]]
+    };
+  } else {
+    finalWhere = {
+      AND: [where, ...extraConditions]
+    };
   }
-  const finalOrderBy = orderBy.length > 0 ? orderBy : [];
+  const finalOrderBy = orderBy?.length ? orderBy : [];
   return {
     where: finalWhere,
     orderBy: finalOrderBy,
-    skip,
-    take
+    skip: skip ?? 0,
+    take: take ?? 10,
+    page: page ?? 1,
+    limit: limit ?? 10
   };
 }
 var SmartQueryModule = class {

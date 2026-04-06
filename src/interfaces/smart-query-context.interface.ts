@@ -1,3 +1,3 @@
 import { SmartQueryMeta, PrismaQuery } from '../types';
 
-export type SmartQueryContext = PrismaQuery & SmartQueryMeta;
+export type SmartQueryContext<TWhere = any> = PrismaQuery<TWhere> & SmartQueryMeta;

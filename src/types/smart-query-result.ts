@@ -1,4 +1,4 @@
-export interface PrismaQuery<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'>> {
+export interface PrismaQuery<TWhere = any, TOrderBy = Record<string, 'asc' | 'desc'>> {
   where: TWhere;
   orderBy: TOrderBy[];
   skip: number;
@@ -18,6 +18,6 @@ export interface SmartQueryPagination {
 }
 
 export type SmartQueryResult<
-  TWhere = unknown,
+  TWhere = any,
   TOrderBy = Record<string, 'asc' | 'desc'>
 > = PrismaQuery<TWhere, TOrderBy> & SmartQueryMeta;

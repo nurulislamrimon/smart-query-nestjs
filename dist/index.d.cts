@@ -34,7 +34,7 @@ interface SmartQueryConfig extends QueryOptions {
     maxLimit?: number;
 }
 
-interface PrismaQuery<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'>> {
+interface PrismaQuery<TWhere = any, TOrderBy = Record<string, 'asc' | 'desc'>> {
     where: TWhere;
     orderBy: TOrderBy[];
     skip: number;
@@ -50,7 +50,7 @@ interface SmartQueryPagination {
     skip: number;
     take: number;
 }
-type SmartQueryResult<TWhere = unknown, TOrderBy = Record<string, 'asc' | 'desc'>> = PrismaQuery<TWhere, TOrderBy> & SmartQueryMeta;
+type SmartQueryResult<TWhere = any, TOrderBy = Record<string, 'asc' | 'desc'>> = PrismaQuery<TWhere, TOrderBy> & SmartQueryMeta;
 
 type KeysOfType<T, U> = {
     [K in keyof T]: T[K] extends U | null | undefined ? K : never;
@@ -63,7 +63,7 @@ type QueryConfig<T> = {
     dateFields: KeysOfType<T, Date>[];
 };
 
-type SmartQueryContext = PrismaQuery & SmartQueryMeta;
+type SmartQueryContext<TWhere = any> = PrismaQuery<TWhere> & SmartQueryMeta;
 
 interface PaginationOptions {
     page: number;
@@ -140,14 +140,23 @@ declare function createSmartQueryInterceptor(config: SmartQueryInterceptorOption
 
 declare const SmartQuery: (...dataOrPipes: unknown[]) => ParameterDecorator;
 
-interface BuildSmartQueryOptions {
-    where?: Record<string, unknown>;
+interface BuildSmartQueryOptions<TWhere = any> {
+    where?: TWhere;
     orderBy?: Record<string, 'asc' | 'desc'>[];
     skip?: number;
     take?: number;
+    page?: number;
+    limit?: number;
 }
-type BuiltSmartQuery = Pick<SmartQueryContext, 'where' | 'orderBy' | 'skip' | 'take'>;
-declare function buildSmartQuery(context: SmartQueryContext, ...extraConditions: Record<string, unknown>[]): BuiltSmartQuery;
+interface BuiltSmartQuery<TWhere = any> {
+    where: TWhere;
+    orderBy?: Record<string, 'asc' | 'desc'>[];
+    skip: number;
+    take: number;
+    page: number;
+    limit: number;
+}
+declare function buildSmartQuery<TWhere = any>(query: SmartQueryResult<TWhere>, ...extraConditions: Partial<TWhere>[]): BuiltSmartQuery<TWhere>;
 
 declare class SmartQueryModule {
     static forRoot(config?: SmartQueryModuleOptions & Partial<SmartQueryConfig>): DynamicModule;

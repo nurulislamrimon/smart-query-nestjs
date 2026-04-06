@@ -323,7 +323,7 @@ interface SmartQueryPagination {
 
 ```typescript
 type SmartQueryResult<
-  TWhere = unknown,
+  TWhere = any,
   TOrderBy = Record<string, "asc" | "desc">,
 > = {
   where: TWhere;
@@ -432,14 +432,14 @@ interface PaginationOptions {
 Internal context object attached to the request:
 
 ```typescript
-interface SmartQueryContext {
-  where: Record<string, unknown>;
+type SmartQueryContext<TWhere = any> = {
+  where: TWhere;
   orderBy: Record<string, "asc" | "desc">[];
   skip: number;
   take: number;
   page: number;
   limit: number;
-}
+};
 ```
 
 #### BuiltSmartQuery
@@ -447,12 +447,36 @@ interface SmartQueryContext {
 Return type of `buildSmartQuery()`:
 
 ```typescript
-interface BuiltSmartQuery {
-  where: Record<string, unknown>;
-  orderBy: Record<string, "asc" | "desc">[];
+interface BuiltSmartQuery<TWhere = any> {
+  where: TWhere;
+  orderBy?: Record<string, "asc" | "desc">[];
   skip: number;
   take: number;
+  page: number;
+  limit: number;
 }
+```
+
+##### Fully Type-Safe Usage
+
+```typescript
+import { buildSmartQuery, SmartQueryResult, Prisma } from "smart-query-nestjs";
+
+const query: SmartQueryResult<Prisma.UserWhereInput> = {
+  where: { email: { contains: "@example.com" } },
+  orderBy: [{ createdAt: "desc" }],
+  skip: 0,
+  take: 10,
+  page: 1,
+  limit: 10,
+};
+
+// Type-safe: result.where is Prisma.UserWhereInput
+const result = buildSmartQuery(query);
+
+// Add extra conditions while preserving types
+const filtered = buildSmartQuery(query, { shop_id: 1 });
+// filtered.where.shop_id is typed as number
 ```
 
 ### Decorators
@@ -486,11 +510,38 @@ NestJS interceptor for parsing query parameters.
 
 #### buildSmartQuery(context, ...extraConditions)
 
-Merges the smart query context with additional conditions and generates a database query object.
+Merges the smart query context with additional conditions and generates a database query object. Fully generic with full TypeScript support.
 
 ```typescript
-const result = buildSmartQuery(query, { shop_id: 1 });
-// Returns: { where, orderBy, skip, take, page }
+import { buildSmartQuery, SmartQueryResult, Prisma } from "smart-query-nestjs";
+
+const query: SmartQueryResult<Prisma.UserWhereInput> = {
+  where: { status: "active" },
+  orderBy: [{ name: "asc" }],
+  skip: 0,
+  take: 10,
+  page: 1,
+  limit: 10,
+};
+
+// Basic usage - result.where is Prisma.UserWhereInput
+const result = buildSmartQuery(query);
+
+// With extra conditions - merges with AND
+const withExtra = buildSmartQuery(query, { shop_id: 1 });
+// withExtra.where is { AND: [query.where, { shop_id: 1 }] }
+
+// Multiple extra conditions
+const withMultiple = buildSmartQuery(query, { shop_id: 1 }, { is_deleted: false });
+```
+
+**Function Signature:**
+
+```typescript
+function buildSmartQuery<TWhere = any>(
+  query: SmartQueryResult<TWhere>,
+  ...extraConditions: Partial<TWhere>[]
+): BuiltSmartQuery<TWhere>
 ```
 
 #### createSmartQueryInterceptor(config)
